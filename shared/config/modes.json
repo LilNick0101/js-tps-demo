@@ -1,0 +1,27 @@
+{
+  "defaultMode": "tdm",
+  "modes": {
+    "tdm": {
+      "teamBased": true,
+      "teamCount": 2,
+      "winCondition": {
+        "type": "teamKills",
+        "target": 100
+      },
+      "friendlyFire": false,
+      "postMatchRestartMs": 8000
+    },
+    "domination": {
+      "active": false,
+      "teamBased": true,
+      "teamCount": 2,
+      "winCondition": {
+        "type": "timeLimit",
+        "durationMs": 600000,
+        "target": 500
+      },
+      "friendlyFire": false,
+      "postMatchRestartMs": 8000
+    }
+  }
+}

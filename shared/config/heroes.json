@@ -1,0 +1,218 @@
+{
+  "_comment": "Hero configuration. id must match HEROES constant (0=Dummy, 1=Sven, 2=Tamerlane, 3=FatherCallas, 4=Selene). weaponId matches WEAPON_IDS (0=AssaultRifle, 1=SMG, 2=Shotgun, 3=PumpShotgun, 4=MachinePistol). moveSpeedMult is optional; defaults to 1.0.",
+  "0": {
+    "id": 0,
+    "name": "Dummy",
+    "class": "Test Dummy",
+    "description": "A placeholder hero for development and testing. No special abilities.",
+    "health": 100,
+    "armor": 0,
+    "armorMax": 60,
+    "shieldMax": 0,
+    "weaponId": 0,
+    "abilities": {
+      "ability1": { "name": "Nothing", "description": "Does nothing." },
+      "ability2": { "name": "Nothing", "description": "Does nothing." },
+      "ultimate": { "name": "Nothing", "description": "Does nothing." }
+    }
+  },
+  "1": {
+    "id": 1,
+    "name": "Sven",
+    "class": "DPS",
+    "description": "A shadow wizard who catches enemies off guard with lightning and teleportation.",
+    "health": 120,
+    "armor": 0,
+    "armorMax": 60,
+    "shieldMax": 0,
+    "weaponId": 1,
+    "abilities": {
+      "ability1": {
+        "name": "Shadow Lightning",
+        "key": "1",
+        "description": "Casts 3 thunderbolts in front of Sven at increasing distances, dealing damage in an area."
+      },
+      "ability2": {
+        "name": "Shadow Teleport",
+        "key": "2",
+        "description": "Teleport forward 5 meters instantly."
+      },
+      "ultimate": {
+        "name": "Shadow Storm",
+        "key": "3",
+        "description": "Emit massive dark electricity in a large area dealing huge damage for 10 seconds."
+      }
+    }
+  },
+  "2": {
+    "id": 2,
+    "name": "Tamerlane",
+    "class": "Tank",
+    "description": "A relentless vigilante who controls space with grenades and sheer resilience.",
+    "health": 180,
+    "armor": 40,
+    "armorMax": 100,
+    "shieldMax": 80,
+    "weaponId": 2,
+    "abilities": {
+      "ability1": {
+        "name": "Shock Grenade",
+        "key": "1",
+        "description": "Throws a grenade that explodes after 2 seconds, damaging and slowing enemies in an area."
+      },
+      "ability2": {
+        "name": "Willpower",
+        "key": "2",
+        "description": "Gain a temporary shield that absorbs damage for 5 seconds."
+      },
+      "ultimate": {
+        "name": "Cluster Strike",
+        "key": "3",
+        "description": "Call in an airstrike that drops multiple bombs in a large area dealing massive damage."
+      }
+    }
+  },
+  "3": {
+    "id": 3,
+    "name": "Father Callas",
+    "class": "Tank",
+    "description": "An evil tank priest who steals life, shrugs off punishment, and exiles enemies to a nightmare dimension.",
+    "quote": "Naive men pray to the gods, they will learn to pray to me.",
+    "health": 200,
+    "armor": 50,
+    "armorMax": 100,
+    "shieldMax": 120,
+    "weaponId": 3,
+    "abilities": {
+      "ability1": {
+        "name": "Siphon Life",
+        "key": "1",
+        "description": "Steal health from enemies in a cone in front of you, healing for 30% of the damage dealt."
+      },
+      "ability2": {
+        "name": "Iron Stand",
+        "key": "2",
+        "description": "Become immune to damage for 5 seconds but cannot move or attack. Afterwards, 20% of all damage received is converted to shield for 10 seconds."
+      },
+      "ultimate": {
+        "name": "Shadow Realm Banish",
+        "key": "3",
+        "description": "Banish the nearest enemy to the Shadow Realm for 6 seconds \u2013 they are immune but cannot act. On return, they take 40 damage."
+      }
+    }
+  },
+  "4": {
+    "id": 4,
+    "name": "Selene",
+    "class": "DPS",
+    "description": "A swift moon-girl assassin who dashes through enemies, soars above the battlefield, and silences whole teams with a devastating lunar blast.",
+    "health": 100,
+    "armor": 0,
+    "armorMax": 60,
+    "shieldMax": 0,
+    "moveSpeedMult": 1.20,
+    "weaponId": 4,
+    "abilities": {
+      "ability1": {
+        "name": "Crystal Smash",
+        "key": "1",
+        "description": "Dash forward and collide with an enemy, dealing 55 damage and briefly stunning them. If the kill shot, a crystal shard drops granting +20 HP to whoever collects it."
+      },
+      "ability2": {
+        "name": "Astral Elevation",
+        "key": "2",
+        "description": "Jump into the air becoming untargetable for 2 s, then fly for 6 s with enhanced speed. On landing, gain +50 % weapon damage for 3 s."
+      },
+      "ultimate": {
+        "name": "Lunar Eclipse",
+        "key": "3",
+        "description": "Leap skyward and become untargetable, then unleash a powerful lunar blast dealing 80 damage and silencing all enemies hit for 4 s."
+      }
+    }
+  },
+  "5": {
+    "id": 5,
+    "name": "Fat Jerome",
+    "class": "Tank",
+    "description": "A stinky and greedy comic relief villain with a big belly and a love for garbage food and money.",
+    "health": 220,
+    "armor": 40,
+    "armorMax": 100,
+    "shieldMax": 0,
+    "moveSpeedMult": 0.9,
+    "weaponId": 3,
+    "abilities": {
+      "ability1": {
+        "name": "Shoulder Charge",
+        "key": "1",
+        "description": "Charges forward, knocking back and damaging enemies in his path. Can steer left and right while charging."
+      },
+      "ability2": {
+        "name": "Butt Smash",
+        "key": "2",
+        "description": "Jumps into the air and slams down, dealing damage in a small area. Enemies right next to him take more damage and are stunned briefly."
+      },
+      "ultimate": {
+        "name": "Fatal Flatulence",
+        "key": "3",
+        "description": "Start farting every second releasing a fart cloud that deals non-lethal damage and slows enemies in the area. Lasts 10 seconds."
+      }
+    }
+  },
+  "6": {
+    "id": 6,
+    "name": "Kyoukan",
+    "class": "Support",
+    "description": "A precision sniper who keeps allies alive and leads pushes with tempo buffs.",
+    "health": 110,
+    "armor": 10,
+    "armorMax": 60,
+    "shieldMax": 0,
+    "weaponId": 5,
+    "abilities": {
+      "ability1": {
+        "name": "Arrow of Gratitude",
+        "key": "1",
+        "description": "Heal an ally for 20% of their max health. Hold middle mouse to self-cast."
+      },
+      "ability2": {
+        "name": "Majestic Leap",
+        "key": "2",
+        "description": "Leap powerfully upward and forward toward your aim direction."
+      },
+      "ultimate": {
+        "name": "Heroic Aura",
+        "key": "3",
+        "description": "For 10 seconds, pulse armor and ultimate cooldown reduction to yourself and nearby allies every second."
+      }
+    }
+  },
+  "7": {
+    "id": 7,
+    "name": "Templar",
+    "class": "Support",
+    "description": "A holy knight who protects allies with a healing rite and a flask of holy water, culminating in a powerful shockwave that stuns enemies.",
+    "health": 120,
+    "armor": 20,
+    "armorMax": 80,
+    "shieldMax": 0,
+    "weaponId": 0,
+    "abilities": {
+      "ability1": {
+        "name": "Healing Rite",
+        "key": "1",
+        "description": "Heal an ally for 10 HP every second for 10 seconds. Can self-cast but not cast on others while self-casting."
+      },
+      "ability2": {
+        "name": "Holy Water",
+        "key": "2",
+        "description": "Throw a flask of holy water that shatters on impact, healing allies and damaging enemies in an area."
+      },
+      "ultimate": {
+        "name": "Hammer Of Justice",
+        "key": "3",
+        "description": "Strikes a hammer on the ground, creating a shockwave that damages enemies and stuns them for 3 seconds."
+      }
+    }
+  }
+}

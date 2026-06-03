@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ultimate Exterminator - MVP</title>
+    <link rel="stylesheet" href="/client/styles.css">
+</head>
+<body>
+    <!-- Main Menu -->
+    <div id="main-menu">
+        <h1>ULTIMATE EXTERMINATOR</h1>
+        <div class="subtitle">Prepare for the ultimate battle</div>
+        <div id="username-wrapper">
+            <label for="username-input">Your Name</label>
+            <input id="username-input" type="text" maxlength="20" placeholder="Enter username" autocomplete="off">
+        </div>
+        <div class="menu-buttons">
+            <button id="play-button">Play</button>
+            <button id="howtoplay-button">How to Play</button>
+            <button id="heroes-button">Heroes</button>
+        </div>
+    </div>
+    
+    <!-- How to Play Modal -->
+    <div id="howtoplay-modal" class="modal">
+        <div class="modal-content">
+            <button class="close-modal" onclick="closeModal('howtoplay-modal')">×</button>
+            <h2>How to Play</h2>
+            
+            <h3>🎮 Controls</h3>
+            <ul>
+                <li><strong>W/A/S/D</strong> - Move forward, left, backward, right</li>
+                <li><strong>Space</strong> - Jump, press in mid air for a double jump</li>
+                <li><strong>Shift</strong> - Dash in the current movement direction</li>
+                <li><strong>Mouse</strong> - Look around</li>
+                <li><strong>Left Click (Hold)</strong> - Shoot</li>
+            </ul>
+            
+            <h3>🎯 Gamemodes</h3>
+            <ul>
+                <li><strong>Team Deathmatch:</strong> Teams compete for battlefield supremacy to get the most kills within a time limit or a score limit.</li>
+                <li><strong>Free-for-All:</strong> Every player for themselves in a chaotic battle to reach the highest kill count.</li>
+                <li><strong>Capture the Flag:</strong> Teams compete to capture the enemy's flag and return it to their base while defending their own flag.</li>
+                <li><strong>King of the Hill:</strong> Teams fight to control a central specific point on the map, earning points for holding it over time.</li>
+                <li><strong>Bounty Hunter:</strong> Teams earn money as they eliminate opponents and complete objectives, they need to secure the money on the bank otherwise other players can steal it.</li>
+                <li><strong>Survival/Team Survival:</strong> Players have limited lives, and the last player or team standing wins.</li>
+            </ul>
+            <h3>💀 Killstreaks</h3>
+            <ul>
+                <li><strong>2 Kills</strong> - Double Kill</li>
+                <li><strong>3 Kills</strong> - Triple Kill</li>
+                <li><strong>4 Kills</strong> - Mega Kill</li>
+                <li><strong>5 Kills</strong> - Killing Spree</li>
+                <li><strong>8 Kills</strong> - Monster Kill</li>
+                <li><strong>11+ Kills</strong> - UNSTOPPABLE</li>
+                <li><strong>20+ Kills</strong> - GODLIKE</li>
+            </ul>
+            
+            <h3>💡 Tips</h3>
+            <ul>
+                <li>Keep moving! If you stand still, you're an easy target</li>
+                <li>Watch your health bar at the bottom of the screen</li>
+                <li>The kill feed (top right) shows recent eliminations</li>
+                <li>You'll respawn after death - don't give up!</li>
+                <li>Aim is not everything, use your abilities to dominate!</li>
+                <li>Watch out for important buffs like the QUAD DAMAGE! They can change the tide of battle!</li>
+            </ul>
+        </div>
+    </div>
+    
+    <!-- Heroes Modal -->
+    <div id="heroes-modal" class="modal">
+        <div class="modal-content">
+            <button class="close-modal" onclick="closeModal('heroes-modal')">×</button>
+            <h2>Heroes</h2>
+            <p>Choose your hero and dominate the battlefield!</p>
+            
+            <div class="heroes-grid">
+                <div class="hero-card">
+                    <h4>Sven</h4>
+                    <div class="role">DPS - Shadow Wizard Assasin</div>
+                    <p><span class="ability">Weapon:</span> Submachine gun</p>
+                    <p><span class="ability">Ability 1:</span> Shadow Lightning: Casts 3 thunderbolts in front of Sven at increasing distances, dealing damage in an area</p>
+                    <p><span class="ability">Ability 2:</span> Shadow Teleport: Teleport forward of 5 meters</p>
+                    <p><span class="ability">Ultimate:</span> Shadow Storm: Emit massive dark electricity in a large area dealing huge damage for 10 seconds</p>
+                    <div class="lore">"I'll show you my ultimate power!"</div>
+                </div>
+                
+                <div class="hero-card">
+                    <h4>Selene</h4>
+                    <div class="role">DPS - Moon Girl Flanker</div>
+                    <p><span class="ability">Weapon:</span> Machine pistol</p>
+                    <p><span class="ability">Ability 1:</span> Crystal Smash: Perform a powerful punch that knocks back enemies</p>
+                    <p><span class="ability">Ability 2:</span> Astral Elevation: Elevate to a higher plane, becoming invulnerable and gaining movement speed</p>
+                    <p><span class="ability">Ultimate:</span> Lunar Eclipse: Become invulnerable for a brief moment, then deal damage to enemies in a selected area</p>
+                    <div class="lore">"No suprise there, I'm a woman on a mission."</div>
+                </div>
+                
+                <div class="hero-card">
+                    <h4>Tamerlane</h4>
+                    <div class="role">Tank - Vigilante Frontliner</div>
+                    <p><span class="ability">Weapon:</span> Semi-auto shotgun</p>
+                    <p><span class="ability">Ability 1:</span> Shock Grenade: Throws a grenade that explodes after 2 seconds, damaging and slowing enemies in an area</p>
+                    <p><span class="ability">Ability 2:</span> Willpower: Gain a temporary shield that absorbs damage for 5 seconds</p>
+                    <p><span class="ability">Ultimate:</span> Cluster Strike: Call in an airstrike that drops multiple bombs in a large area dealing massive damage</p>
+                    <div class="lore">"Too often people think of the benefits without ever considering the costs."</div>
+                </div>
+                
+                <div class="hero-card">
+                    <h4>Kyoukan</h4>
+                    <div class="role">Support - Sniper Teamplayer</div>
+                    <p><span class="ability">Weapon:</span> Sniper rifle</p>
+                    <p><span class="ability">Ability 1:</span> Arrow of Gratitude: Heal for 20% of your max health, can be cast on an ally</p>
+                    <p><span class="ability">Ability 2:</span> Majestic Leap: Do a long jump that can be used to traverse difficult terrain</p>
+                    <p><span class="ability">Ultimate:</span> Heroic Aura: Give armor and ultimate charge to nearby allies</p>
+                    <div class="lore">"I will prove myself."</div>
+                </div>
+                
+                <div class="hero-card">
+                    <h4>Father Callas</h4>
+                    <div class="role">Tank - Drain Tank Priest</div>
+                    <p><span class="ability">Weapon:</span> Pump-action Shotgun</p>
+                    <p><span class="ability">Ability 1:</span> Siphon Life: Steal health from nearby enemies</p>
+                    <p><span class="ability">Ability 2:</span> Iron Stand: Become immune to damage for 5 seconds, but you can't move or attack</p>
+                    <p><span class="ability">Ultimate:</span> Shadow Realm Banish: Send an enemy to the Shadow Realm for 6 seconds, on return they will take damage</p>
+                    <div class="lore">"Naive men pray to the gods, they will learn to pray to me."</div>
+                </div>
+
+                <div class="hero-card">
+                    <h4>Fat Jerome</h4>
+                    <div class="role">Tank - Stinky Bruiser</div>
+                    <p><span class="ability">Weapon:</span> Pump-action Shotgun</p>
+                    <p><span class="ability">Ability 1:</span> Shoulder Charge: Charge forward towards an enemy and drag them</p>
+                    <p><span class="ability">Ability 2:</span> Butt Smash: Jump into the air and slam down dealing area damage on impact</p>
+                    <p><span class="ability">Ultimate:</span> Fatal Flatulence: Start farting, creating lingering clouds of gas that deal damage and slow down enemies</p>
+                    <div class="lore">"Fat Jerome, yeahehehe!"</div>
+                </div>
+
+                <div class="hero-card">
+                    <h4>Templar</h4>
+                    <div class="role">Support - Paladin Healer</div>
+                    <p><span class="ability">Weapon:</span> Assault Rifle</p>
+                    <p><span class="ability">Ability 1:</span> Holy Water: Throws bottles of holy water, healing allies standing in the area</p>
+                    <p><span class="ability">Ability 2:</span> Healing Rite: Cast a healing spell on an ally, restoring their health as long as they dont take damage</p>
+                    <p><span class="ability">Ultimate:</span> Hammer of Justice: Slam a hammer down, dealing massive damage to enemies in the front and stunning them</p>
+                    <div class="lore">"I fight for my allies."</div>
+                </div>
+            </div>
+
+            <h3>Coming soon!</h3>
+            <div class="heroes-grid">
+                <div class="hero-card">
+                    <h4>Div</h4>
+                    <div class="role">DPS - Cyborg Stalker</div>
+                    <p><span class="ability">Weapon:</span> Assault rifle</p>
+                    <p><span class="ability">Ability 1:</span> Triple Missile Burst: Launch three missiles in a spread pattern</p>
+                    <p><span class="ability">Ability 2:</span> Shadow Dash: Dash in a direction at choice, can be done three times upon usage</p>
+                    <p><span class="ability">Ultimate:</span> One In The Chamber: Equip a powerful hand cannon, dealing boosted damage on headshots</p>
+                    <div class="lore">"They say death comes from the shadows. They're right. I'm death, and I live in the shadows."</div>
+                </div>
+                <div class="hero-card">
+                    <h4>EXEerror</h4>
+                    <div class="role">Support - Skilled Hacker</div>
+                    <p><span class="ability">Weapon:</span> Dual Pistols</p>
+                    <p><span class="ability">Ability 1:</span> Hack: Silence an enemy and interrupt channeling abilities</p>
+                    <p><span class="ability">Ability 2:</span> Double Time: Increase movement speed during combat </p>
+                    <p><span class="ability">Ultimate:</span> Teleport Beacon: Place a beacon that allows you and your allies to teleport to a selected location</p>
+                    <div class="lore">"Too easy, piece of cake!"</div>
+                </div>
+                <div class="hero-card">
+                    <h4>Sapphire</h4>
+                    <div class="role">DPS - Elegant Flanker</div>
+                    <p><span class="ability">Weapon:</span> Dual SMGs</p>
+                    <p><span class="ability">Ability 1:</span> Cold Blast: Freeze nearby enemies, dealing damage and slowing them down </p>
+                    <p><span class="ability">Ability 2:</span> Ice Skating: Increases movement speed and jump height</p>
+                    <p><span class="ability">Ultimate:</span> Bullet Dance: Perform a series of rapid shots with perfect accuracy, dealing damage to multiple enemies</p>
+                    <div class="lore">"Tag them and bag them!"</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Connection Error Dialog -->
+    <div id="connection-error-dialog" class="hidden">
+        <div id="connection-error-box">
+            <div class="error-icon">⚠️</div>
+            <h2>Connection Failed</h2>
+            <p id="connection-error-message">Could not connect to the server.</p>
+            <button id="connection-error-back-btn">Back to Menu</button>
+        </div>
+    </div>
+
+    <script type="module" src="/client/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,29 @@
+{
+    "_comment": "Map configurations. Each key must match the map 'id'. 'spawnConfig' must match a key in spawns.json. 'collisionPath' points to a pre-baked collision JSON under /public. Set to null for procedurally generated collision. 'gltfPath' is the client-side visual model under /public; null means a flat plane is generated at runtime.",
+    "default": {
+        "id": "default",
+        "name": "Flatlands",
+        "description": "An open flat arena. The default placeholder map with no obstacles.",
+        "size": 200,
+        "spawnConfig": "default",
+        "gltfPath": null,
+        "collisionPath": null,
+        "collisionLayer": "collision",
+        "floor": { "width": 200, "depth": 200, "color": 3355443 },
+        "skybox": "/assets/world/background/default/",
+        "fog": { "color": 8900331, "near": 30, "far": 150 }
+    },
+    "arena": {
+        "id": "arena",
+        "name": "Arena",
+        "description": "A compact indoor arena with raised platforms and cover.",
+        "size": 120,
+        "spawnConfig": "arena",
+        "gltfPath": "/assets/world/maps/arena/arena.glb",
+        "collisionPath": "/assets/world/maps/arena/arena.collision.json",
+        "collisionLayer": "collision",
+        "floor": null,
+        "skybox": "/assets/world/background/arena/",
+        "fog": { "color": 16541194, "near": 50, "far": 130 }
+    }
+}

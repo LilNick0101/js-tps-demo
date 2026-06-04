@@ -3,7 +3,7 @@
   "version": "0.0.2",
   "scripts": {
     "dev": "vite",
-    "start": "node server/index.js"
+    "start": "node --env-file=.env server/index.js"
   },
   "dependencies": {
     "@dimforge/rapier3d-compat": "^0.19.3",

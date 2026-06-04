@@ -252,6 +252,6 @@ setInterval(() => {
     gameState.update();
 }, 1000 / TICK_RATE);
 
-server.listen(3002,() => {
-    console.log('Server listening on port 3002');
+server.listen(process.env.SERVER_PORT || 3002,() => {
+    console.log('Server listening on port ' + (process.env.SERVER_PORT || 3002));
 });

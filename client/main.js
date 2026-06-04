@@ -1326,8 +1326,8 @@ function startGame() {
 
     // Connect to server
     channel = geckos({ 
-        url: 'http://localhost',
-        port: 3002,
+        url: import.meta.env.VITE_SERVER_URL ? import.meta.env.VITE_SERVER_URL : "http://localhost", // Auto-use same host in production
+        port: import.meta.env.VITE_SERVER_PORT ? parseInt(import.meta.env.VITE_SERVER_PORT) : 1337,
         iceServers: [
             { urls: 'stun:stun.l.google.com:19302' },
         ]            
@@ -1361,7 +1361,8 @@ window.addEventListener('DOMContentLoaded', () => {
     audioManager.playInterfaceSound("gameBootup");
     const playButton = document.getElementById('play-button');
     if (playButton) {
-        playButton.addEventListener('click', () => {
+        playButton.addEventListener('click', (e) => {
+            e.preventDefault();
             startGame();
             audioManager.startLoopInterfaceSound('menuLoop');
         });

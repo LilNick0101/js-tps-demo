@@ -1,3 +1,5 @@
+import MathUtils from '../utils/MathUtils.js';
+
 /**
  * client/systems/InterpolationSystem.js
  *
@@ -119,11 +121,11 @@ class InterpolationSystem {
         const t        = Math.max(0, Math.min(1, raw_t));
 
         return {
-            x:     lerp(older.x,     newer.x,     t),
-            y:     lerp(older.y,     newer.y,     t),
-            z:     lerp(older.z,     newer.z,     t),
-            yaw:   lerpAngle(older.yaw,   newer.yaw,   t),
-            pitch: lerp(older.pitch, newer.pitch, t),
+            x:     MathUtils.lerp(older.x,     newer.x,     t),
+            y:     MathUtils.lerp(older.y,     newer.y,     t),
+            z:     MathUtils.lerp(older.z,     newer.z,     t),
+            yaw:   MathUtils.lerpAngle(older.yaw,   newer.yaw,   t),
+            pitch: MathUtils.lerp(older.pitch, newer.pitch, t),
         };
     }
 
@@ -140,25 +142,6 @@ class InterpolationSystem {
     clearAll() {
         this.snapshots.clear();
     }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Math helpers
-// ─────────────────────────────────────────────────────────────────────────────
-
-function lerp(a, b, t) {
-    return a + (b - a) * t;
-}
-
-/**
- * Lerp between two angles (radians) taking the shortest arc.
- */
-function lerpAngle(a, b, t) {
-    let diff = b - a;
-    // Wrap diff into [-π, π]
-    while (diff >  Math.PI) diff -= 2 * Math.PI;
-    while (diff < -Math.PI) diff += 2 * Math.PI;
-    return a + diff * t;
 }
 
 export default InterpolationSystem;

@@ -31,10 +31,7 @@ const {
 const app = express();
 const server = http.createServer(app);
 const io = geckos({
-    iceServers: [
-        { urls: 'stun:stun.l.google.com:19302' },
-    ],
-    cors: { origin: "http://localhost:5173" } // Add the specific origin you serve index.html from
+    //cors: { origin: "http://localhost:5173" } // Add the specific origin you serve index.html from
 });
 io.addServer(server);
 

@@ -45,7 +45,7 @@ app.get('/', (req, res) => {
 // --- ECS & PHYSICS INITIALIZATION ---
 const ecsWorld = new World();
 const physicsWorld = new PhysicsWorld();
-const combatSystem = new CombatSystem(ecsWorld, physicsWorld,io);
+const combatSystem = new CombatSystem(ecsWorld, physicsWorld, io);
 const collisionSystem = new CollisionSystem(physicsWorld, io);
 
 const movementSystem = new MovementSystem(ecsWorld,physicsWorld);
@@ -54,14 +54,17 @@ const respawnSystem = new RespawnSystem(ecsWorld, botSystem, io);
 const damageSystem = new DamageSystem(ecsWorld, collisionSystem, botSystem, io, respawnSystem);
 
 const networkSystem = new NetworkSystem(ecsWorld);
-const pickupSystem  = new PickupSystem(ecsWorld, io);
+
 const heroSystem    = new HeroSystem(ecsWorld, physicsWorld, damageSystem, io);
+const pickupSystem  = new PickupSystem(ecsWorld, io, heroSystem);
 // Give MovementSystem access to HeroSystem so it can apply slow effects
 movementSystem.heroSystem = heroSystem;
 // Give DamageSystem access to HeroSystem for invulnerability and Iron Stand shield callbacks
 damageSystem.heroSystem = heroSystem;
 // Give BotSystem access to HeroSystem so frozen bots don’t move or shoot
 botSystem.heroSystem = heroSystem;
+
+combatSystem.heroSystem = heroSystem; // For combat modifiers like Selene’s Lunar Eclipse and Astral Elevation
 // Circular buffer of the last 500 ms of world snapshots
 const stateHistory = new StateHistory(500, TICK_RATE);
 

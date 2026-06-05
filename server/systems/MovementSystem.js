@@ -99,9 +99,7 @@ class MovementSystem {
         const len = Math.sqrt(dirX * dirX + dirZ * dirZ);
         if (len < 1e-6) return false; // Small epsilon check
 
-        const speedMult = this.heroSystem?.isSlowed(eid)
-            ? ABILITY_COOLDOWNS.SHOCK_GRENADE_SLOW_FACTOR * (this.heroSystem?.getMovementSpeedMult(eid) ?? 1.0)
-            : (this.heroSystem?.getMovementSpeedMult(eid) ?? 1.0);
+        const speedMult = this.heroSystem?.getMovementSpeedMult(eid);
         const targetVx = (dirX / len) * PLAYER_MOVE_SPEED * speedMult;
         const targetVz = (dirZ / len) * PLAYER_MOVE_SPEED * speedMult;
 

@@ -6,6 +6,10 @@ const {
     PLAYER_RADIUS,
 } = require('../../shared/constants');
 const { Vector3 } = require('../../shared/utils/Vector3.js');
+const {
+    Position,
+    Velocity,
+} = require('../../shared/components');
 
 const GROUP_PLAYER = 0x0001; // Group 0
 const GROUP_GROUND = 0x0002; // Group 1
@@ -18,6 +22,8 @@ const GROUND_MEMBERSHIP = (GROUP_GROUND << 16) | (GROUP_PLAYER | GROUP_GROUND);
 const MAP_MEMBERSHIP    = (GROUP_MAP << 16)    | (GROUP_PLAYER | GROUP_GROUND | GROUP_MAP);
 // LOS should ignore players and only hit solid world geometry
 const LOS_MEMBERSHIP    = (GROUP_PLAYER << 16) | (GROUP_GROUND | GROUP_MAP);
+
+
 
 /**
  * PhysicsWorld - Wrapper for Rapier physics simulation

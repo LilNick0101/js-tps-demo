@@ -1,4 +1,4 @@
-const { createWorld, addEntity, removeEntity, addComponent } = require('bitecs');
+const { createWorld, addEntity, removeEntity, addComponent, defineQuery } = require('bitecs');
 const {
     Position,
     Velocity,
@@ -34,6 +34,8 @@ const BOT_NAME_POOL = [
     'Bitcoin Miner', 'Jeff Bezos', 'Elon Musk', 'Sonic The Hedgehog', 'EXEerror', 'Jakob', 'The Secret Escape',
     "Goku", "Sussy Baka", "Predator", "THANOS IS COMING", "Doom Slayer", "Low Cortisol Gamer"
 ];
+
+const physicsQuery = defineQuery([Position, Velocity]);
 
 class World {
     constructor() {
@@ -262,6 +264,26 @@ class World {
         this.bulletEntities.add(eid);
         
         return eid;
+    }
+
+    syncPhysicsToECS(physicsWorld) {
+        const physicsEntities = physicsQuery(this.world);
+        for (const eid of physicsEntities) {
+            const id = this.getEntityId(eid);
+            if (!id) continue;
+            const body = physicsWorld.getBody(id.toString());
+            if (!body) continue;
+
+            const pos = physicsWorld.getTranslation(id.toString());
+            Position.x[eid] = pos.x;
+            Position.y[eid] = pos.y;
+            Position.z[eid] = pos.z;
+
+            const vel = physicsWorld.getLinearVelocity(id.toString());
+            Velocity.vx[eid] = vel.x;
+            Velocity.vy[eid] = vel.y;
+            Velocity.vz[eid] = vel.z;
+        }
     }
 
     /**

@@ -366,8 +366,13 @@ export default class HUD {
         const el = this._els.get('kill-streak');
         if (!el) return;
         el.textContent = streakName.toUpperCase() + '!';
+        // play animations/animations.css "pop-outin" on the element for a quick scale pop
+        el.classList.add('pop-outin');
         el.style.opacity = '1';
-        setTimeout(() => { el.style.opacity = '0'; }, 2000);
+        setTimeout(() => { 
+            el.classList.remove('pop-outin');
+            el.style.opacity = '0'; 
+        }, 2000);
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -818,6 +823,7 @@ export default class HUD {
             position: fixed;
             top: 30%;
             left: 50%;
+            text-align: center;
             transform: translate(-50%, -30%);
             font-family: "Robot Heroes", Arial, sans-serif;
             font-size: 48px;
@@ -825,7 +831,6 @@ export default class HUD {
             color: #ffff00;
             text-shadow: 4px 4px 8px black;
             opacity: 0;
-            transition: opacity 0.3s;
             pointer-events: none;
             z-index: 1000;
         `;

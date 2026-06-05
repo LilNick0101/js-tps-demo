@@ -11,6 +11,7 @@ class RenderSystem {
         this.scene = scene;
 
         this.lightningTexture = new THREE.TextureLoader().load('/assets/textures/effects/thunder.png');
+        this.glowTexture = new THREE.TextureLoader().load('/assets/textures/effects/glow.png');
         
         // Map entity IDs to Three.js objects
         /** @type {Map<string|number, THREE.Object3D>} */
@@ -525,6 +526,18 @@ class RenderSystem {
                 new THREE.TetrahedronGeometry(0.44),
                 new THREE.MeshStandardMaterial({ color: 0x00ddcc, emissive: 0x00ffee, emissiveIntensity: 0.7, metalness: 0.5, roughness: 0.2 })
             );
+        }else if (type === 3) {
+            mesh = new THREE.Group();
+            const ball = new THREE.Mesh(
+                new THREE.SphereGeometry(0.4),
+                new THREE.MeshStandardMaterial({ color: 0x00ffff, emissive: 0x00ffff, emissiveIntensity: 0.7, metalness: 0.5, roughness: 0.2 })
+            );
+            const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: this.glowTexture, color: 0x00ffff, transparent: true, opacity: 1 }));
+            glow.scale.set(3, 3, 3);
+            const light = new THREE.PointLight(0x00ffff, 2, 8);
+            mesh.add(ball);
+            mesh.add(glow);
+            mesh.add(light);
         }
         this.scene.add(mesh);
         this.pickupMeshes.set(id, mesh);
@@ -1454,7 +1467,6 @@ class RenderSystem {
         mesh.add(particles);
         this._healingParticles.set(id, particles);
         this._scheduleOwnedTimeout(() => {
-            console.log('Disposing healing particles for', id);
             geometry.dispose();
             if (particles.material) particles.material.dispose();
             const parentMesh = id ? this.entityMeshes.get(id) : null;

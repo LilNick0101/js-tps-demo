@@ -33,6 +33,12 @@ module.exports = {
     // Game Constants
     BULLET_DAMAGE: 25,   // legacy fallback; weapons use per-weapon damage
     TICK_RATE: 60,
+
+    DAMAGE_TYPES: {
+        WEAPON: 0,
+        ABILITY: 1,
+        OTHER: 2,
+    },
     
     ARMOR_ABSORPTION: 0.4,  // 40% of incoming damage absorbed per armor point consumed
 
@@ -43,7 +49,7 @@ module.exports = {
     MODES_CONFIG,
     ACTIVE_GAME_MODE,
     POST_MATCH_RESTART_MS,
-    NUM_BOTS: 9, // default number of bots
+    NUM_BOTS: 0, // default number of bots
 
     // Respawn
     RESPAWN_DELAY: 4000,   // ms before a dead entity respawns
@@ -181,11 +187,14 @@ module.exports = {
         HEALTH_VIAL:   0,
         ARMOR_SHARD:   1,
         CRYSTAL_SHARD: 2,  // Selene – dropped on Crystal Smash kill; transient
+        QUAD_DAMAGE:   3,  // temporary damage boost pickup (e.g. from Tamerlane's Cluster Strike)
     },
+    QUAD_DAMAGE_DURATION_TICKS: 20 * 60, // 20 s at 60 tps
     PICKUP_CONFIGS: {
         0: { value: 30,  respawnTicks: 1200    }, // health vial: +30 hp, 20 s respawn
         1: { value: 20,  respawnTicks: 1800    }, // armor shard: +20 armor, 30 s respawn
         2: { value: 30,  respawnTicks: 9999999 }, // crystal shard: +30 hp, manually removed
+        3: { value: 3.0,  respawnTicks: 5400   }, // quad damage: +3.0× damage, 90 s respawn (or manual removal after duration)
     },
     PICKUP_RADIUS: 1.5, // units – how close a player must be to collect
 
@@ -304,7 +313,7 @@ module.exports = {
         FATAL_FLATULENCE_FART_INTERVAL:  60,   // 1 s between farts
         FATAL_FLATULENCE_DAMAGE:         8,    // per tick per enemy (non-lethal)
         FATAL_FLATULENCE_RADIUS:         12.0,  // fart cloud radius
-        FATAL_FLATULENCE_TICK_INTERVAL:  10,   // damage ticks every 10 ticks
+        FATAL_FLATULENCE_TICK_INTERVAL:  15,   // damage ticks every 15 ticks
 
         // Kyoukan – Arrow of Gratitude
         ARROW_OF_GRATITUDE_CD:                540,  // 9 s

@@ -103,28 +103,10 @@ class GameState {
         }
     }
 
-    syncPhysicsToECS(eid, bodyId) {
-
-        const pos = this.physicsWorld.getTranslation(bodyId);
-        Position.x[eid] = pos.x;
-        Position.y[eid] = pos.y;
-        Position.z[eid] = pos.z;
-
-        const vel = this.physicsWorld.getLinearVelocity(bodyId);
-        Velocity.vx[eid] = vel.x;
-        Velocity.vy[eid] = vel.y;
-        Velocity.vz[eid] = vel.z;
-
-        const hasInput = Controller.forward[eid] || Controller.backward[eid] ||
-                        Controller.left[eid]    || Controller.right[eid];
-        if (!hasInput && this.movementSystem.isPlayerOnGround(eid)) {
-            this.physicsWorld.applyGroundFriction(bodyId, 0.70);
-        }
-    }
-
-    resetOutOfBoundsEntity(eid, bodyId) {
-        this.physicsWorld.resetForces(bodyId);
-        this.physicsWorld.setTranslation(bodyId, { x: 0, y: 13, z: 0 });
+    resetOutOfBoundsEntity(eid) {
+        const id = this.ecsWorld.getEntityId(eid);
+        this.physicsWorld.resetForces(id);
+        this.physicsWorld.setTranslation(id, { x: 0, y: 13, z: 0 });
         
         Velocity.vx[eid] = 0;
         Velocity.vy[eid] = 0;
@@ -156,17 +138,23 @@ class GameState {
         
         // Check out-of-bounds for players and teleport back to center
         const BOUNDARY = 300; // MAP_SIZE / 2
+        this.ecsWorld.syncPhysicsToECS(this.physicsWorld);
+        
         for (const eid of this.ecsWorld.getAllPlayerAndBotEntities()) {
             const x = Position.x[eid];
             const y = Position.y[eid];
             const z = Position.z[eid];
-            const id = this.ecsWorld.getEntityId(eid);
-            if (!id) continue; // Should never happen, but just in case
 
-            this.syncPhysicsToECS(eid, id);
+            const bodyId = this.ecsWorld.getSocketByEntity(eid) || this.ecsWorld.getBotIdString(eid);
+            const hasInput = Controller.forward[eid] || Controller.backward[eid] ||
+                        Controller.left[eid]    || Controller.right[eid];
+
+            if (!hasInput && this.movementSystem.isPlayerOnGround(eid)) {
+                this.physicsWorld.applyGroundFriction(bodyId, 0.70);
+            }
             
             if (Math.abs(x) > BOUNDARY || Math.abs(z) > BOUNDARY || y < -BOUNDARY) {
-                this.resetOutOfBoundsEntity(eid, id);
+                this.resetOutOfBoundsEntity(eid);
             }
         }
 
@@ -215,6 +203,7 @@ class GameState {
         } else if (matchUpdate.transition === 'reset') {
             this.emitMatchEvent('matchReset', this.buildMatchEventPayload('matchReset'));
             this.emitMatchEvent('matchStarted', this.buildMatchEventPayload('matchStarted'));
+            this.damageSystem.reset(); // Reset any match-specific state in the damage system (e.g. first blood tracking)
         }
 
         this.networkGameStateFacade.emitGameState(this.ecsWorld.world, this.matchState);

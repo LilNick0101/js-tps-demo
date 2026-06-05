@@ -13,6 +13,7 @@ class CombatSystem {
     constructor(ecsWorld, physicsWorld, io) {
         this.ecsWorld = ecsWorld;
         this.physicsWorld = physicsWorld;
+        this.heroSystem = null;
         this.io = io;
     }
 
@@ -51,7 +52,7 @@ class CombatSystem {
         // Consume one round
         Weapon.ammo[eid]--;
         // Set cooldown for next shot
-        Weapon.fireCooldown[eid] = stats.fireCooldown;
+        Weapon.fireCooldown[eid] = stats.fireCooldown * (this.heroSystem?.getFireCooldownMultiplier(eid) ?? 1.0);
 
         const px   = Position.x[eid];
         const py   = Position.y[eid] + PLAYER_HEAD_OFFSET;

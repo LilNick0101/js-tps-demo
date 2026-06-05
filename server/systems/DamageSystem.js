@@ -14,7 +14,7 @@ const {
     Weapon,
     Team,
 } = require('../../shared/components');
-const { BULLET_DAMAGE, RESPAWN_DELAY, ARMOR_ABSORPTION, WEAPONS, MODES_CONFIG, ACTIVE_GAME_MODE, TICK_RATE } = require('../../shared/constants');
+const { BULLET_DAMAGE, RESPAWN_DELAY, ARMOR_ABSORPTION, WEAPONS, MODES_CONFIG, ACTIVE_GAME_MODE, TICK_RATE, DAMAGE_TYPES } = require('../../shared/constants');
 
 // Query for entities that can take damage
 const damageableQuery = defineQuery([Position, Health]);
@@ -36,6 +36,7 @@ class DamageSystem {
         /** @type {import('./HeroSystem') | null} Injected after HeroSystem is created */
         this.heroSystem = null;
         this.gameState = null;
+        this.firstBloodOccurred = false;
 
         const modeConfig = (MODES_CONFIG.modes && MODES_CONFIG.modes[ACTIVE_GAME_MODE]) || {};
         this.friendlyFire = modeConfig.friendlyFire === true;
@@ -114,11 +115,10 @@ class DamageSystem {
             }
 
             if (bestTarget !== null && (worldHitFraction == null || bestFraction < worldHitFraction)) {
-                // Use per-weapon damage; apply any active Selene weapon-bonus multiplier
+                // Use per-weapon damage; modifiers are applied in applyDamage
                 const weaponId = Weapon.id[ownerEid];
                 const baseDmg = WEAPONS[weaponId]?.damage ?? BULLET_DAMAGE;
-                const dmgMult = this.heroSystem?.getWeaponDamageMultiplier(ownerEid) ?? 1.0;
-                this.applyDamage(bestTarget, ownerEid, Math.round(baseDmg * dmgMult));
+                this.applyDamage(bestTarget, ownerEid, baseDmg, { damageType: DAMAGE_TYPES.WEAPON });
                 bulletsToRemove.push(bulletEid);
                 continue;
             }
@@ -144,18 +144,34 @@ class DamageSystem {
      * Apply damage to an entity, passing through shield → armor → health layers.
      * Emits playerDamaged with updated shield, armor and health values.
      */
-    applyDamage(targetEid, attackerEid, damage, ignoreArmor = false) {
+    applyDamage(targetEid, attackerEid, damage, options = {}) {
+        let ignoreArmor = false;
+        let damageType = DAMAGE_TYPES.OTHER;
+        if (typeof options === 'boolean') {
+            ignoreArmor = options;
+        } else if (options && typeof options === 'object') {
+            ignoreArmor = options.ignoreArmor === true;
+            damageType = options.damageType ?? DAMAGE_TYPES.OTHER;
+        }
+
         if (Health.current[targetEid] <= 0) return;
         if (this.ecsWorld.isPlayer(targetEid) && !Player.isReady[targetEid]) return; // Don't damage players who haven't finished hero select
         if (this.isFriendlyFireBlocked(targetEid, attackerEid)) return;
 
+        const outgoingMult = this.heroSystem?.getOutgoingDamageMultiplier(attackerEid, damageType) ?? 1.0;
+        const incomingMult = this.heroSystem?.getIncomingDamageMultiplier(targetEid, damageType) ?? 1.0;
+        
+        const effectiveDamage = Math.max(0, Math.round(damage * outgoingMult * incomingMult));
+        
+        if (effectiveDamage <= 0) return;
+
         // Iron Stand shield-phase hook: convert a portion of incoming raw damage to shield.
-        this.heroSystem?.onDamageTaken(targetEid, damage);
+        this.heroSystem?.onDamageTaken(targetEid, effectiveDamage);
 
         // Invulnerable entities (Iron Stand, Shadow Realm) cannot be damaged.
         if (this.heroSystem?.isInvulnerable(targetEid)) return;
 
-        let remaining = damage;
+        let remaining = effectiveDamage;
 
         // ── Layer 1: Shield ──────────────────────────────────────────────────
         if (Shield.current[targetEid] > 0) {
@@ -188,7 +204,8 @@ class DamageSystem {
         this.io.emit('playerDamaged', {
             targetId:  targetId,
             attackerId: attackerId,
-            damage:    damage,
+            damage:    effectiveDamage,
+            damageType: damageType,
             newHealth: Health.current[targetEid],
             maxHealth: Health.max[targetEid],
             newArmor:  Armor.current[targetEid],
@@ -202,6 +219,10 @@ class DamageSystem {
         }
 
         
+    }
+
+    reset() {
+        this.firstBloodOccurred = false;
     }
 
     /**
@@ -237,6 +258,15 @@ class DamageSystem {
 
         // Register scoring with the mode-agnostic match system.
         this.gameState?.registerKill?.(killerEid, victimEid);
+        if (this.firstBloodOccurred === false) {
+            this.firstBloodOccurred = true;
+            this.io.emit('firstBlood', {
+                killerId: killerId,
+                killerName: killerName,
+                victimId: victimId,
+                victimName: victimName,
+            });
+        }
 
         // Emit death event (include respawn delay and world position for spatial audio)
         this.io.emit('playerDied', {

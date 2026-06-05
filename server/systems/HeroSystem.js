@@ -17,6 +17,7 @@ const {
     TICK_RATE,
     ABILITY_COOLDOWNS: CD,
     PICKUP_TYPES,
+    DAMAGE_TYPES,
 } = require('../../shared/constants');
 const heroConfigs = require('../../shared/config/heroes.json');
 
@@ -62,11 +63,6 @@ class HeroSystem {
          * Willpower expiry: Map<eid, ticksRemaining>
          */
         this._willpowerTimers = new Map();
-
-        /**
-         * Slow status: Map<eid, ticksRemaining>
-         */
-        this.slowedEntities = new Map();
 
         /**
          * Iron Stand active phase: Map<eid, ticksRemaining>.
@@ -123,10 +119,14 @@ class HeroSystem {
          */
         this._astralFlightTimers = new Map();
 
-        /**
-         * Post-landing weapon damage bonus: Map<eid, ticksRemaining>.
-         */
-        this._astralWeaponBonusTimers = new Map();
+        this._statModifiers = {
+            weaponDamage: new Map(),
+            abilityDamage: new Map(),
+            moveSpeed: new Map(),
+            fireCooldown: new Map(),
+            weaponResist: new Map(),
+            abilityResist: new Map(),
+        };
 
         /**
          * Lunar Eclipse charge phase: Map<eid, ticksRemaining>.
@@ -218,7 +218,6 @@ class HeroSystem {
         this._tickShadowLightningStrikes();
         this._tickShadowStorm();
         this._tickShadowStormTimers();
-        this._tickSlows();
         this._tickSiphonLife();
         this._tickIronStand();
         this._tickIronStandShield();
@@ -229,7 +228,6 @@ class HeroSystem {
         this._tickStuns();
         this._tickSilences();
         this._tickAstralFlight();
-        this._tickAstralWeaponBonus();
         this._tickLunarEclipse();
         // Fat Jerome
         this._tickShoulderCharges();
@@ -241,6 +239,7 @@ class HeroSystem {
         this._tickHeroicAuras();
         this._tickHealingRites();
         this._tickHolyWaters();
+        this._tickStatModifiers();
 
     }
 
@@ -380,7 +379,8 @@ class HeroSystem {
     }
 
     handleDeath(eid) {
-        this.interruptAbilities(eid)
+        this.interruptAbilities(eid);
+        this.clearAllModifiers(eid);
         if (this._selfCastingEnabled.has(eid)) {
             this._selfCastingEnabled.delete(eid);
         }
@@ -590,7 +590,14 @@ class HeroSystem {
                         g.x, g.y, g.z,
                         CD.SHOCK_GRENADE_RADIUS
                     )) {
-                        this.slowedEntities.set(targetEid, CD.SHOCK_GRENADE_SLOW);
+                        this.addTimedModifier(
+                            targetEid,
+                            'moveSpeed',
+                            CD.SHOCK_GRENADE_SLOW_FACTOR,
+                            CD.SHOCK_GRENADE_SLOW,
+                            'slow',
+                            { refreshMode: 'max' }
+                        );
                     }
                 }
 
@@ -811,7 +818,10 @@ class HeroSystem {
                 if (dotXZ < cosHalf) continue;
 
                 const preDmg = Health.current[targetEid];
-                this.damageSystem.applyDamage(targetEid, eid, CD.SIPHON_LIFE_DAMAGE, /*ignoreArmor*/true);
+                this.damageSystem.applyDamage(targetEid, eid, CD.SIPHON_LIFE_DAMAGE, {
+                    ignoreArmor: true,
+                    damageType: DAMAGE_TYPES.ABILITY,
+                });
                 totalDamage += preDmg - Math.max(0, Health.current[targetEid]);
             }
 
@@ -958,8 +968,10 @@ class HeroSystem {
 
                 if (Health.current[targetEid] > 0) {
                     this.damageSystem.applyDamage(
-                        targetEid, state.casterEid,
-                        CD.SHADOW_REALM_RETURN_DAMAGE, /*ignoreArmor*/true
+                        targetEid,
+                        state.casterEid,
+                        CD.SHADOW_REALM_RETURN_DAMAGE,
+                        { ignoreArmor: true, damageType: DAMAGE_TYPES.ABILITY }
                     );
                 }
 
@@ -1040,7 +1052,10 @@ class HeroSystem {
 
                 // Apply stun first, then damage
                 this._stunTimers.set(targetEid, CD.CRYSTAL_SMASH_STUN_DURATION);
-                this.damageSystem.applyDamage(targetEid, eid, CD.CRYSTAL_SMASH_DAMAGE, /*ignoreArmor*/true);
+                this.damageSystem.applyDamage(targetEid, eid, CD.CRYSTAL_SMASH_DAMAGE, {
+                    ignoreArmor: true,
+                    damageType: DAMAGE_TYPES.ABILITY,
+                });
 
                 const killed = Health.current[targetEid] <= 0;
 
@@ -1138,6 +1153,14 @@ class HeroSystem {
             invulnRemaining: CD.ASTRAL_ELEVATION_INVULN_DURATION,
         });
 
+        this.addTimedModifier(
+            eid,
+            'moveSpeed',
+            CD.ASTRAL_ELEVATION_SPEED_MULT,
+            CD.ASTRAL_ELEVATION_FLIGHT_DURATION,
+            'astralFlightSpeed'
+        );
+
         const id = this.ecsWorld.getEntityId(eid);
         this.io.emit('astralElevationStart', {
             id,
@@ -1156,7 +1179,13 @@ class HeroSystem {
                 this._astralFlightTimers.delete(eid);
 
                 // Grant post-landing weapon bonus
-                this._astralWeaponBonusTimers.set(eid, CD.ASTRAL_ELEVATION_WEAPON_BONUS_DURATION);
+                this.addTimedModifier(
+                    eid,
+                    'weaponDamage',
+                    CD.ASTRAL_ELEVATION_WEAPON_BONUS_MULT,
+                    CD.ASTRAL_ELEVATION_WEAPON_BONUS_DURATION,
+                    'astralWeaponBonus'
+                );
 
                 const id = this.ecsWorld.getEntityId(eid);
                 this.io.emit('astralElevationEnd', {
@@ -1180,14 +1209,7 @@ class HeroSystem {
     }
 
     _tickAstralWeaponBonus() {
-        for (const [eid, remaining] of this._astralWeaponBonusTimers) {
-            if (remaining <= 1) {
-                this._astralWeaponBonusTimers.delete(eid);
-                this.io.emit('astralWeaponBonusExpired', { id: this.ecsWorld.getEntityId(eid) });
-            } else {
-                this._astralWeaponBonusTimers.set(eid, remaining - 1);
-            }
-        }
+        // Deprecated in favor of _tickStatModifiers()
     }
 
     /**
@@ -1279,7 +1301,10 @@ class HeroSystem {
             // Also require target to be within a reasonable vertical band
             if (Math.abs(dy) > CD.LUNAR_ECLIPSE_RADIUS + 16) continue;
 
-            this.damageSystem.applyDamage(targetEid, eid, CD.LUNAR_ECLIPSE_DAMAGE, /*ignoreArmor*/true);
+            this.damageSystem.applyDamage(targetEid, eid, CD.LUNAR_ECLIPSE_DAMAGE, {
+                ignoreArmor: true,
+                damageType: DAMAGE_TYPES.ABILITY,
+            });
             this._silenceTimers.set(targetEid, CD.LUNAR_ECLIPSE_SILENCE_DURATION);
             hitTargetIds.push(this.ecsWorld.getEntityId(targetEid));
         }
@@ -1302,7 +1327,8 @@ class HeroSystem {
      * Apply area damage to all living entities within `radius` of (cx, cy, cz),
      * excluding the caster.
      */
-    _applyAOE(casterEid, cx, cy, cz, radius, damage) {
+    _applyAOE(casterEid, cx, cy, cz, radius, damage, options = {}) {
+        const { ignoreArmor = true, damageType = DAMAGE_TYPES.ABILITY } = options;
         const r2 = radius * radius;
         for (const targetEid of this.ecsWorld.getAllPlayerAndBotEntities()) {
             if (targetEid === casterEid) continue;
@@ -1312,28 +1338,143 @@ class HeroSystem {
                 continue;
             }
 
-            let ignoreArmor = true;
-            this.damageSystem.applyDamage(targetEid, casterEid, damage, ignoreArmor);
+            this.damageSystem.applyDamage(targetEid, casterEid, damage, { ignoreArmor, damageType });
         }
     }
 
-    _tickSlows() {
-        for (const [eid, remaining] of this.slowedEntities) {
-            if (remaining <= 1) {
-                this.slowedEntities.delete(eid);
-            } else {
-                this.slowedEntities.set(eid, remaining - 1);
+    _tickStatModifiers() {
+        for (const bucket of Object.values(this._statModifiers)) {
+            for (const [eid, entries] of bucket) {
+                for (let i = entries.length - 1; i >= 0; i--) {
+                    const entry = entries[i];
+                    if (entry.remaining <= 1) {
+                        entries.splice(i, 1);
+                        this._emitModifierExpired(eid, entry);
+                    } else {
+                        entry.remaining -= 1;
+                    }
+                }
+                if (entries.length === 0) bucket.delete(eid);
             }
         }
     }
 
+    _getModifierList(statKey, eid) {
+        const bucket = this._statModifiers[statKey];
+        if (!bucket) return null;
+        return bucket.get(eid) || null;
+    }
+
+    _getModifierMultiplier(statKey, eid) {
+        const list = this._getModifierList(statKey, eid);
+        if (!list || list.length === 0) return 1.0;
+        let mult = 1.0;
+        for (const entry of list) {
+            if (entry.mult > 0) mult *= entry.mult;
+        }
+        return mult;
+    }
+
+    _hasModifierSource(statKey, eid, source) {
+        const list = this._getModifierList(statKey, eid);
+        if (!list) return false;
+        return list.some((entry) => entry.source === source);
+    }
+
+    addTimedModifier(eid, statKey, mult, durationTicks, source, options = {}) {
+        const bucket = this._statModifiers[statKey];
+        if (!bucket) return false;
+        const duration = Math.max(0, Math.floor(durationTicks));
+        if (duration <= 0) return false;
+
+        const key = source || statKey;
+        const list = bucket.get(eid) || [];
+        const existing = list.find((entry) => entry.source === key);
+
+        if (existing) {
+            existing.mult = mult;
+            if (options.refreshMode === 'max') {
+                existing.remaining = Math.max(existing.remaining, duration);
+            } else {
+                existing.remaining = duration;
+            }
+            bucket.set(eid, list);
+            return true;
+        }
+
+        list.push({ mult, remaining: duration, source: key });
+        bucket.set(eid, list);
+        return false;
+    }
+
+    clearAllModifiers(eid) {
+        for (const bucket of Object.values(this._statModifiers)) {
+            const entries = bucket.get(eid);
+            if (!entries) continue;
+            for (const entry of entries) {
+                this._emitModifierExpired(eid, entry);
+            }
+            bucket.delete(eid);
+        }
+    }
+
+    _emitModifierExpired(eid, entry) {
+        const id = this.ecsWorld.getEntityId(eid);
+        if (entry.source === 'quadDamage') {
+            this.io.emit('quadDamageEnded', { id });
+        }
+        if (entry.source === 'astralWeaponBonus') {
+            this.io.emit('astralWeaponBonusExpired', { id });
+        }
+    }
+
+    activateQuadDamage(eid, durationTicks, mult) {
+        const refreshed = this.addTimedModifier(
+            eid,
+            'weaponDamage',
+            mult,
+            durationTicks,
+            'quadDamage'
+        );
+        const id = this.ecsWorld.getEntityId(eid);
+        this.io.emit('quadDamageStarted', {
+            id,
+            duration: durationTicks / TICK_RATE,
+            multiplier: mult,
+            refreshed,
+        });
+    }
+
+    getOutgoingDamageMultiplier(eid, damageType) {
+        if (damageType === DAMAGE_TYPES.WEAPON) {
+            return this._getModifierMultiplier('weaponDamage', eid);
+        }
+        if (damageType === DAMAGE_TYPES.ABILITY) {
+            return this._getModifierMultiplier('abilityDamage', eid);
+        }
+        return 1.0;
+    }
+
+    getIncomingDamageMultiplier(eid, damageType) {
+        if (damageType === DAMAGE_TYPES.WEAPON) {
+            return this._getModifierMultiplier('weaponResist', eid);
+        }
+        if (damageType === DAMAGE_TYPES.ABILITY) {
+            return this._getModifierMultiplier('abilityResist', eid);
+        }
+        return 1.0;
+    }
+
+    getFireCooldownMultiplier(eid) {
+        return this._getModifierMultiplier('fireCooldown', eid);
+    }
+
     /**
-     * Returns true if the entity is currently slowed.
-     * Can be queried by MovementSystem to halve movement speed.
+     * Returns true if a slow modifier is active on the entity.
      * @param {number} eid
      */
     isSlowed(eid) {
-        return this.slowedEntities.has(eid) && this.slowedEntities.get(eid) > 0;
+        return this._hasModifierSource('moveSpeed', eid, 'slow');
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -1443,7 +1584,10 @@ class HeroSystem {
                 state.hitTargets.add(targetEid);
 
                 // Apply damage
-                this.damageSystem.applyDamage(targetEid, eid, CD.SHOULDER_CHARGE_DAMAGE, false);
+                this.damageSystem.applyDamage(targetEid, eid, CD.SHOULDER_CHARGE_DAMAGE, {
+                    ignoreArmor: false,
+                    damageType: DAMAGE_TYPES.ABILITY,
+                });
 
                 // Apply knockback
                 const targetBodyId = this.ecsWorld.getEntityId(targetEid);
@@ -1553,7 +1697,10 @@ class HeroSystem {
                         }
 
                         if (damage > 0) {
-                            this.damageSystem.applyDamage(targetEid, eid, damage, false);
+                            this.damageSystem.applyDamage(targetEid, eid, damage, {
+                                ignoreArmor: false,
+                                damageType: DAMAGE_TYPES.ABILITY,
+                            });
                             hitTargets.push({
                                 id: this.ecsWorld.getEntityId(targetEid),
                                 stunned,
@@ -1657,13 +1804,22 @@ class HeroSystem {
                     const currentHealth = Health.current[targetEid];
                     if (currentHealth > 1) {
                         const damage = Math.min(CD.FATAL_FLATULENCE_DAMAGE, currentHealth - 1);
-                        this.damageSystem.applyDamage(targetEid, cloud.ownerEid, damage, false);
+                        this.damageSystem.applyDamage(targetEid, cloud.ownerEid, damage, {
+                            ignoreArmor: false,
+                            damageType: DAMAGE_TYPES.ABILITY,
+                        });
                     }
 
                     // Apply slow
                     const slowDuration = CD.FATAL_FLATULENCE_TICK_INTERVAL * 2;
-                    const existingSlow = this.slowedEntities.get(targetEid) || 0;
-                    this.slowedEntities.set(targetEid, Math.max(existingSlow, slowDuration));
+                    this.addTimedModifier(
+                        targetEid,
+                        'moveSpeed',
+                        CD.SHOCK_GRENADE_SLOW_FACTOR,
+                        slowDuration,
+                        'slow',
+                        { refreshMode: 'max' }
+                    );
             
                 }
             }
@@ -2036,7 +2192,10 @@ class HeroSystem {
                 if (dotXZ < cosHalf) continue;
 
                 // Hit target
-                this.damageSystem.applyDamage(targetEid, eid, CD.HAMMER_OF_JUSTICE_DAMAGE, false);
+                this.damageSystem.applyDamage(targetEid, eid, CD.HAMMER_OF_JUSTICE_DAMAGE, {
+                    ignoreArmor: false,
+                    damageType: DAMAGE_TYPES.ABILITY,
+                });
                 this._stunTimers.set(targetEid, CD.HAMMER_OF_JUSTICE_STUN_DURATION);
 
                 const id = this.ecsWorld.getEntityId(eid);
@@ -2166,9 +2325,7 @@ class HeroSystem {
     getMovementSpeedMult(eid) {
         const cfg = heroConfigs[String(HeroClass.id[eid])];
         let mult = cfg?.moveSpeedMult ?? 1.0;
-        if (this._astralFlightTimers.has(eid)) {
-            mult *= CD.ASTRAL_ELEVATION_SPEED_MULT;
-        }
+        mult *= this._getModifierMultiplier('moveSpeed', eid);
         return mult;
     }
 
@@ -2179,10 +2336,7 @@ class HeroSystem {
      * @returns {number}
      */
     getWeaponDamageMultiplier(eid) {
-        if (this._astralWeaponBonusTimers.has(eid)) {
-            return CD.ASTRAL_ELEVATION_WEAPON_BONUS_MULT;
-        }
-        return 1.0;
+        return this.getOutgoingDamageMultiplier(eid, DAMAGE_TYPES.WEAPON);
     }
 
     /**

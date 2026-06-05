@@ -54,7 +54,8 @@ class AudioManager {
             "victory": "/sounds/ui/victory.ogg",
             "defeat": "/sounds/ui/defeat.ogg",
             "matchStart": "/sounds/ui/match_start.ogg",
-            "demonWind": "/sounds/ui/demon_wind.ogg"
+            "demonWind": "/sounds/ui/demon_wind.ogg",
+            "firstBlood": "/sounds/killstreak/firstblood.ogg"
         };
         
         this.menuLoopMusic = null;
@@ -131,6 +132,7 @@ class AudioManager {
         this._loadUISound('victory', this.uiSounds.victory, 0.5);
         this._loadUISound('defeat', this.uiSounds.defeat, 0.5);
         this._loadUISound('matchStart', this.uiSounds.matchStart, 0.5);
+        this._loadUISound('firstBlood', this.uiSounds.firstBlood, 0.7);
         this._loadUISound('menuLoop', '/sounds/ui/house_lo.wav', 0.5, (sound) => {
             sound.setLoop(true);
         });
@@ -154,6 +156,9 @@ class AudioManager {
         this._loadSpatialSFX('armor', '/sounds/gameplay/armor.ogg', 0.7, 10, 30, 'linear');
         this._loadSpatialSFX('health', '/sounds/gameplay/health.ogg', 0.7, 10, 30, 'linear');
         this._loadSpatialSFX('jumppad', '/sounds/gameplay/jumppad.ogg', 0.7, 10, 30, 'linear');
+        this._loadSpatialSFX('quadDamagePickup', '/sounds/gameplay/quaddamage.ogg', 0.8, 10, 30, 'inverse');
+        this._loadSpatialSFX('quadDamageShot', '/sounds/gameplay/quaddamage_shot.ogg', 0.8, 10, 30, 'inverse');
+        this._loadSpatialSFX('powerUpExpired', '/sounds/gameplay/powerup_expired.ogg', 0.8, 10, 30, 'inverse');
 
         // Looping ability
         this._loadSpatialSFX('electricityLoop', '/sounds/abilities/electricity_loop.ogg', 0.7, 10, 30, 'linear', (sound) => {

@@ -631,3 +631,23 @@ canvas {
 #mini-scoreboard .ms-row.is-me .ms-kills {
     color: #ff4500;
 }
+
+.pop-outin {
+  animation: 0.3s anim-popoutin linear 1;
+}
+
+@keyframes anim-popoutin {
+  0% {
+    /* Keep the centering translate AND apply the scale */
+    transform: translate(-50%, -30%) scale(8);
+    opacity: 0;
+  }
+  50% {
+    transform: translate(-50%, -30%) scale(4);
+    opacity: 0.5;
+  }
+  100% {
+    transform: translate(-50%, -30%) scale(1);
+    opacity: 1;
+  }
+}

@@ -69,6 +69,7 @@ const interpolationSystem = new InterpolationSystem();
 let myId = null;
 let myHealth = 100;
 let myMaxHealth = 100;
+let myMaxArmor = 100;
 let myName = 'Player';
 let hud = null;
 let heroSelect = null;
@@ -100,6 +101,7 @@ let currentMatchState = {
 
 // Maps entity/socket ID → heroClassId for voice line lookups
 const heroClassCache = new Map();
+const heroStatusCache = new Map(); // entity ID → { status_effects }
 
 // Inputs
 const inputs = {
@@ -180,6 +182,9 @@ function backToMenu() {
     gameStarted = false;
     myId  = null;
     myHealth = 100;
+    myMaxHealth = 100;
+    myArmor = 0;
+    myMaxArmor = 100;
     myName = 'Player';
 
     // Clear score cache
@@ -472,7 +477,7 @@ function setupNetworkHandlers() {
         if (isLocalPlayer(data.targetId)) {
             myHealth = data.newHealth;
             hud.updateHealth(myHealth, myMaxHealth);
-            if (data.newArmor  !== undefined) hud.updateArmor(data.newArmor);
+            if (data.newArmor  !== undefined) hud.updateArmor(data.newArmor,myMaxArmor);
             if (data.newShield !== undefined) hud.updateShield(data.newShield);
         }
         
@@ -517,11 +522,20 @@ function setupNetworkHandlers() {
         }
     });
 
+    registerEventListener('firstBlood', (data) => {
+        hud.addKillFeedEntry(`\u2694 ${data.killerName || data.killerId} drew first blood on ${data.victimName || data.victimId}!`);
+        hud.showKillStreak("First Blood");
+        audioManager.playInterfaceSound("firstBlood");
+    });
+
     // Handle weapon-fire events (spatial audio for all entities)
     registerEventListener('weaponFired', (data) => {
         if (data.x !== undefined) {
             const mesh = renderSystem.getMesh(data.shooterId);
             audioManager.playWeaponShot(data.weaponId, mesh);
+            if (heroStatusCache.get(data.shooterId)?.status_effects?.includes('quadDamage')) {
+                audioManager.playSoundAt("quadDamageShot", mesh);
+            }
         }
     });
 
@@ -584,7 +598,7 @@ function setupNetworkHandlers() {
             if (data.healthMax !== undefined) myMaxHealth = data.healthMax;
             myHealth = data.health ?? myMaxHealth;
             hud.updateHealth(myHealth, myMaxHealth);
-            hud.updateArmor(0);
+            hud.updateArmor(0,myMaxArmor);
             hud.updateShield(0);
             hud.hideRespawnCountdown();
         }
@@ -597,10 +611,24 @@ function setupNetworkHandlers() {
             specialEffects.healingEffect(data.collectorId);
         }else if (data.type === 1) { // Armor shard
             specialEffects.armorEffect(data.collectorId);
+        }else if (data.type === 3) { // Quad-damage
+            
         }
     });
     registerEventListener('pickupRespawned', (data) => {
         renderSystem.showPickupMesh(data.id);
+    });
+
+    registerEventListener('quadDamageStarted', (data) => {
+        audioManager.playSoundAt('quadDamagePickup', renderSystem.getMesh(data.id));
+        heroStatusCache.set(data.id, { ...(heroStatusCache.get(data.id) ?? {}), status_effects: [...(heroStatusCache.get(data.id)?.status_effects ?? []), 'quadDamage'] });
+        if (isLocalPlayer(data.id)) hud.showSelfEffect('quadDamage', 'Quad Damage – Active', '#10abc3');
+    });
+
+    registerEventListener('quadDamageEnded', (data) => {
+        audioManager.playSoundAt('powerUpExpired', renderSystem.getMesh(data.id));
+        heroStatusCache.set(data.id, { ...(heroStatusCache.get(data.id) ?? {}), status_effects: (heroStatusCache.get(data.id)?.status_effects ?? []).filter((v) => v !== 'quadDamage') });
+        if (isLocalPlayer(data.id)) hud.hideSelfEffect('quadDamage');
     });
 
     // Ability VFX events (client-side sound/flash only — RenderSystem handles geometry)
@@ -633,7 +661,7 @@ function setupNetworkHandlers() {
     registerEventListener('shadowStormEnd',   (data) => { 
         if (isLocalPlayer(data.id)) hud.hideSelfEffect('shadowStorm');
         // Stop looping electricity sound
-        audioManager.stopSoundLoop('electricityLoop', data.id);
+        audioManager.stopSoundLoop('electricityLoop', renderSystem.getMesh(data.id).uuid);
     });
     registerEventListener('grenadeThrown', (data) => {
         renderSystem.vfxGrenadeThrown(data);
@@ -1082,8 +1110,9 @@ function setupNetworkHandlers() {
 
                 myHealth    = playerData.health;
                 myMaxHealth = playerData.healthMax ?? myMaxHealth;
+                myMaxArmor  = playerData.armorMax ?? myMaxArmor;
                 hud.updateHealth(myHealth, myMaxHealth);
-                if (playerData.armor  !== undefined) hud.updateArmor(playerData.armor);
+                if (playerData.armor  !== undefined) hud.updateArmor(playerData.armor,playerData.armorMax);
                 if (playerData.shield !== undefined) hud.updateShield(playerData.shield);
                 if (playerData.ammo   !== undefined) hud.updateAmmo(playerData.ammo);
                 const myHeroClass = playerData.heroClass ?? 0;

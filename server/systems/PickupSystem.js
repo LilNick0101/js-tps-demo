@@ -19,11 +19,13 @@ class PickupSystem {
     /**
      * @param {import('../world/World')} ecsWorld
      * @param {object} io  - geckos server instance
+     * @param {import('./HeroSystem')} heroSystem - reference to HeroSystem for applying quad damage
      * @param {string} [mapKey]
      */
-    constructor(ecsWorld, io, mapKey = RESPAWN_MAP) {
+    constructor(ecsWorld, io, heroSystem, mapKey = RESPAWN_MAP) {
         this.ecsWorld = ecsWorld;
         this.io       = io;
+        this.heroSystem = heroSystem;
         this.mapKey   = mapKey;
     }
 
@@ -109,6 +111,10 @@ class PickupSystem {
                 return Armor.current[collectorEid] < Armor.max[collectorEid];
             case PICKUP_TYPES.CRYSTAL_SHARD:
                 return Health.current[collectorEid] < Health.max[collectorEid];
+            case PICKUP_TYPES.QUAD_DAMAGE:
+                // For simplicity, allow collecting quad damage even if already active.
+                // More complex logic could check for existing quad status and remaining duration.
+                return true;
             default:
                 return false;
         }
@@ -137,6 +143,10 @@ class PickupSystem {
                     Health.current[collectorEid] + value
                 );
                 break; // handled below
+            case PICKUP_TYPES.QUAD_DAMAGE:
+                console.log(`PickupSystem: applying quad damage to entity ${collectorEid} for 1200 ticks`);
+                this.heroSystem.activateQuadDamage(collectorEid, 1200,value);
+                break;
             default:
                 console.warn(`PickupSystem: unknown pickup type "${type}" on entity ${pickupEid}`);
                 return;

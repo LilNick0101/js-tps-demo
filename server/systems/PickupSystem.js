@@ -22,10 +22,10 @@ class PickupSystem {
      * @param {import('./HeroSystem')} heroSystem - reference to HeroSystem for applying quad damage
      * @param {string} [mapKey]
      */
-    constructor(ecsWorld, io, heroSystem, mapKey = RESPAWN_MAP) {
+    constructor(ecsWorld, io, statusEffectsSystem, mapKey = RESPAWN_MAP) {
         this.ecsWorld = ecsWorld;
         this.io       = io;
-        this.heroSystem = heroSystem;
+        this.statusEffectsSystem = statusEffectsSystem;
         this.mapKey   = mapKey;
     }
 
@@ -145,7 +145,7 @@ class PickupSystem {
                 break; // handled below
             case PICKUP_TYPES.QUAD_DAMAGE:
                 console.log(`PickupSystem: applying quad damage to entity ${collectorEid} for 1200 ticks`);
-                this.heroSystem.activateQuadDamage(collectorEid, 1200,value);
+                this.statusEffectsSystem.quadDamage(collectorEid, 1200,value);
                 break;
             default:
                 console.warn(`PickupSystem: unknown pickup type "${type}" on entity ${pickupEid}`);

@@ -24,7 +24,7 @@ const bulletQuery = defineQuery([Position, Bullet]);
  * DamageSystem - Handles damage calculation and health management
  */
 class DamageSystem {
-    constructor(ecsWorld, collisionSystem, botSystem, io, respawnSystem) {
+    constructor(ecsWorld, collisionSystem, botSystem, io, respawnSystem, modifiers) {
         this.ecsWorld = ecsWorld;
         this.collisionSystem = collisionSystem;
         this.botSystem = botSystem;
@@ -35,6 +35,8 @@ class DamageSystem {
         this._msgCounter = 0; // Monotonic counter for message IDs
         /** @type {import('./HeroSystem') | null} Injected after HeroSystem is created */
         this.heroSystem = null;
+        /** @type {import('./ModifiersSystem')} */
+        this.modifiers = modifiers;
         this.gameState = null;
         this.firstBloodOccurred = false;
 
@@ -158,8 +160,8 @@ class DamageSystem {
         if (this.ecsWorld.isPlayer(targetEid) && !Player.isReady[targetEid]) return; // Don't damage players who haven't finished hero select
         if (this.isFriendlyFireBlocked(targetEid, attackerEid)) return;
 
-        const outgoingMult = this.heroSystem?.getOutgoingDamageMultiplier(attackerEid, damageType) ?? 1.0;
-        const incomingMult = this.heroSystem?.getIncomingDamageMultiplier(targetEid, damageType) ?? 1.0;
+        const outgoingMult = this.modifiers.getOutgoingDamageMultiplier(attackerEid, damageType);
+        const incomingMult = this.modifiers.getIncomingDamageMultiplier(targetEid, damageType);
         
         const effectiveDamage = Math.max(0, Math.round(damage * outgoingMult * incomingMult));
         
@@ -193,9 +195,15 @@ class DamageSystem {
             remaining -= healthMitigated;
         }
 
-        // ── Layer 3: Health ──────────────────────────────────────────────────
         if (remaining > 0) {
             Health.current[targetEid] = Math.max(0, Health.current[targetEid] - remaining);
+            const lifestealMult = this.modifiers.getLifestealMultiplier(attackerEid, damageType);
+            if (lifestealMult > 0) {
+                const healAmount = Math.round(effectiveDamage * lifestealMult);
+                if (healAmount > 0) {
+                    this.heal(attackerEid, healAmount);
+                }
+            }
         }
 
         const targetId   = this.ecsWorld.getEntityId(targetEid);
@@ -211,14 +219,28 @@ class DamageSystem {
             newArmor:  Armor.current[targetEid],
             maxArmor:  Armor.max[targetEid],
             newShield: Shield.current[targetEid],
-            maxShield: Shield.max[targetEid],
+            maxShield: Shield.max[targetEid]
         });
 
         if (Health.current[targetEid] <= 0) {
             this.handleDeath(targetEid, attackerEid);
         }
 
-        
+    }
+
+    heal(targetEid, amount) {
+        if (Health.current[targetEid] <= 0) return;
+
+        const prevHealth = Health.current[targetEid];
+        Health.current[targetEid] = Math.min(Health.max[targetEid], Health.current[targetEid] + amount);
+
+        const targetId = this.ecsWorld.getEntityId(targetEid);
+        this.io.emit('playerHealed', {
+            targetId: targetId,
+            amount: Health.current[targetEid] - prevHealth,
+            newHealth: Health.current[targetEid],
+            maxHealth: Health.max[targetEid],
+        });
     }
 
     reset() {
@@ -286,6 +308,7 @@ class DamageSystem {
         });
 
         this.heroSystem?.handleDeath(victimEid);
+        this.modifiers?.onDeath(victimEid);
 
         // Delegate respawn scheduling to RespawnSystem
         this.respawnSystem.scheduleRespawn(victimEid, RESPAWN_DELAY);

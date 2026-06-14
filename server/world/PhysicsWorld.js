@@ -160,11 +160,12 @@ class PhysicsWorld {
         // Probe just below the collider's feet and ignore hits against the same body.
         const rayOrigin = {
             x: pos.x,
-            y: pos.y - PLAYER_RADIUS + 0.05,
+            y: pos.y - PLAYER_RADIUS + 0.06,
             z: pos.z,
         };
+        //console.log(`Checking ground for body ${id} at position (${pos.x.toFixed(2)}, ${pos.y.toFixed(2)}, ${pos.z.toFixed(2)}), ray origin (${rayOrigin.x.toFixed(2)}, ${rayOrigin.y.toFixed(2)}, ${rayOrigin.z.toFixed(2)}), velocity (${vel.x.toFixed(2)}, ${vel.y.toFixed(2)}, ${vel.z.toFixed(2)})`);
         const rayDir = { x: 0, y: -1, z: 0 };
-        const maxToi = 0.13;
+        const maxToi = 0.14;
         const solid = true;
         
         const ray = new RAPIER.Ray(rayOrigin, rayDir);

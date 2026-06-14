@@ -10,6 +10,7 @@ import PredictionSystem from './network/PredictionSystem.js';
 import InterpolationSystem from './systems/InterpolationSystem.js';
 import ClientMapLoader from './world/MapLoader.js';
 import MAPS from '../shared/config/maps.json';
+import CameraSystem from './systems/CameraSystem.js'
 
 // Must match CURRENT_MAP in shared/constants.js
 const CURRENT_MAP = 'arena';
@@ -18,6 +19,7 @@ const CURRENT_MAP = 'arena';
 // Global channel variable - will be initialized when game starts
 let channel = null;
 let gameStarted = false;
+let isConnected = false;
 let connectionTimeout = null;
 let currentPing = 0;
 let pingInterval = null;
@@ -27,17 +29,8 @@ const scene = new THREE.Scene();
 // Load map visuals (floor geometry, fog, GLTF if applicable)
 const _mapConfig = MAPS[CURRENT_MAP];
 let mapRoot = null;
-new ClientMapLoader().load(_mapConfig, scene).then((root) => {
-    mapRoot = root;
-});
 
-const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-const DEFAULT_FOV = 75;
-const SCOPED_FOV = 32;
-const PLAYER_HEAD_OFFSET = 1.1; // Keep in sync with shared/constants.js
-const CAMERA_SHOULDER_OFFSET = new THREE.Vector3(1.2, 2.3, 4.5);
-const CAMERA_AIM_DISTANCE = 200;
-const CAMERA_COLLISION_PUSH = 0.15;
+
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.domElement.classList.add('game-container');
@@ -62,18 +55,25 @@ function changeFog(newFog) {
 
 // --- STATE & SYSTEMS ---
 const renderSystem = new RenderSystem(scene);
+
+const cameraSystem = new CameraSystem(renderSystem);
+new ClientMapLoader().load(_mapConfig, scene).then((root) => {
+    mapRoot = root;
+    cameraSystem.setMapRoot(mapRoot);
+});
 const audioManager = new AudioManager();
 const specialEffects = new SpecialEffects(renderSystem, audioManager);
 const predictionSystem   = new PredictionSystem();
 const interpolationSystem = new InterpolationSystem();
 let myId = null;
+let myArmor = 0;
 let myHealth = 100;
 let myMaxHealth = 100;
 let myMaxArmor = 100;
 let myName = 'Player';
 let hud = null;
 let heroSelect = null;
-audioManager.init(camera,scene);
+audioManager.init(cameraSystem.camera, scene);
 
 // Maps heroClass id → { a1, a2, ult } cooldown totals (in ticks) for HUD CD display
 const HERO_CD_MAXES = {
@@ -122,7 +122,7 @@ let pitch = 0; // Up/Down rotation
 let scopeOverlay = null;
 let aimYaw = 0;
 let aimPitch = 0;
-const WORLD_UP = new THREE.Vector3(0, 1, 0);
+
 const cameraOffset = new THREE.Vector3();
 const desiredCameraPos = new THREE.Vector3();
 const finalCameraPos = new THREE.Vector3();
@@ -173,10 +173,10 @@ function backToMenu() {
     }
 
     // Disconnect channel
-    if (channel) {
+    if (isConnected && channel) {
         try { channel.close(); } catch (_) {}
-        channel = null;
     }
+    channel = null;
 
     // Reset game state
     gameStarted = false;
@@ -242,20 +242,16 @@ function shootWeapon() {
 
 function setScoped(scoped) {
     inputs.scope = scoped;
-    camera.fov = scoped ? SCOPED_FOV : DEFAULT_FOV;
-    camera.updateProjectionMatrix();
+    cameraSystem.setScoped(scoped);
     if (scopeOverlay) {
         scopeOverlay.style.display = scoped ? 'block' : 'none';
     }
 }
 
-function enableSelfCasting() {
-    inputs.abilitySelf = true;
+function setSelfCasting(selfCasting) {
+    inputs.abilitySelf = selfCasting;
 }
 
-function disableSelfCasting() {
-    inputs.abilitySelf = false;
-}
 
 
 // --- INPUT HANDLING (POINTER LOCK) ---
@@ -274,7 +270,7 @@ document.body.addEventListener('mousedown', (mouse) => {
         setScoped(true);
     }
     if (gameStarted && mouse.button === 1) { // Middle click
-        enableSelfCasting();
+        setSelfCasting(true);
     }
 });
 
@@ -287,13 +283,12 @@ document.body.addEventListener('mouseup', (mouse) => {
         setScoped(false);
     }
     if (gameStarted && mouse.button === 1) {
-        disableSelfCasting();
+        setSelfCasting(false);
     }
 });
 
 function onWindowResize() {
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
+    cameraSystem.onWindowResize();
     renderer.setSize( window.innerWidth, window.innerHeight );
 }
 
@@ -427,6 +422,7 @@ function setupNetworkHandlers() {
         }
         myId = channel.id;
         console.log('Connected with ID:', myId);
+        isConnected = true;
 
         if (pingInterval) clearInterval(pingInterval);
         pingInterval = setInterval(() => {
@@ -486,6 +482,13 @@ function setupNetworkHandlers() {
             hud.showHitmarker();
             audioManager.playInterfaceSound("hitmarker")
             renderSystem.updateEnemyHealthBar(data.targetId, data.newHealth, data.maxHealth, data.newArmor, data.maxArmor, data.newShield, data.maxShield);
+        }
+    });
+
+    registerEventListener('playerHealed', (data) => {
+        if (isLocalPlayer(data.targetId)) {
+            myHealth = data.newHealth;
+            hud.updateHealth(myHealth, myMaxHealth);
         }
     });
 
@@ -934,14 +937,15 @@ function setupNetworkHandlers() {
         const pos = safePos(data);
         const meshTarget = renderSystem.getMesh(data.targetId);
         const mesh = renderSystem.getMesh(data.casterId);
-        specialEffects.healingEffect(data.targetId);
         if (data.casterId != null) {
             if (data.casterId === data.targetId && inputs.abilitySelf) {
                 audioManager.playHeroAbilityLine(6, 'ability1_self', mesh);
             } else {
                 audioManager.playHeroAbilityLine(6, 'ability1', mesh);
+                specialEffects.healingEffect(data.casterId);
             }
         }
+        specialEffects.healingEffect(data.targetId);
         if (isLocalPlayer(data.targetId)) {
             hud.showSelfEffect('kyoukanHeal', `✚ Arrow of Gratitude +${Math.round(data.healAmount ?? 0)} HP`, '#63d1ff');
             setTimeout(() => hud.hideSelfEffect('kyoukanHeal'), 900);
@@ -1200,79 +1204,20 @@ function setupNetworkHandlers() {
         }
 
         // 3. Update Camera (Over-the-Shoulder)
-        const myMesh = renderSystem.getMesh(myId);
-        aimYaw = yaw;
-        aimPitch = pitch;
-        if (myMesh) {
-            const cameraLerpAlpha = 1 - Math.exp(-8 * dt);
-
-            headPosition.copy(myMesh.position);
-            headPosition.y += PLAYER_HEAD_OFFSET;
-
-            // Rotate right-shoulder offset by yaw (horizontal rotation)
-            cameraOffset.copy(CAMERA_SHOULDER_OFFSET);
-            cameraOffset.applyAxisAngle(WORLD_UP, yaw);
-
-            desiredCameraPos.copy(myMesh.position).add(cameraOffset);
-            finalCameraPos.copy(desiredCameraPos);
-
-            // Camera collision: slide toward the head if a wall blocks the view
-            if (mapRoot) {
-                aimDirection.copy(desiredCameraPos).sub(headPosition);
-                cameraCollisionRaycaster.set(headPosition, aimDirection.normalize());
-                cameraCollisionRaycaster.far = headPosition.distanceTo(desiredCameraPos);
-                const hits = cameraCollisionRaycaster.intersectObjects(mapRoot.children, true);
-                if (hits.length > 0) {
-                    const hit = hits[0];
-                    const movement = desiredCameraPos.clone().sub(headPosition);
-                    const n = hit.face.normal.clone().transformDirection(hit.object.matrixWorld);
-                    const slide = movement.sub(n.multiplyScalar(movement.dot(n)));
-                    finalCameraPos.copy(headPosition).add(slide);
-                    finalCameraPos.add(n.multiplyScalar(CAMERA_COLLISION_PUSH));
-                }
-            }
-
-            camera.position.lerp(finalCameraPos, cameraLerpAlpha); // Frame-rate independent smoothing
-
-            // Aim ray from camera through crosshair (screen center)
-            cameraForward.set(
-                -Math.sin(yaw) * Math.cos(pitch),
-                Math.sin(pitch),
-                -Math.cos(yaw) * Math.cos(pitch)
-            ).normalize();
-
-            aimTarget.copy(camera.position).addScaledVector(cameraForward, CAMERA_AIM_DISTANCE);
-            if (mapRoot) {
-                cameraAimRaycaster.set(camera.position, cameraForward);
-                cameraAimRaycaster.far = CAMERA_AIM_DISTANCE;
-                cameraAimRaycaster.near = 12; // Don't aim at walls right in front of the camera
-                const hits = cameraAimRaycaster.intersectObjects(mapRoot.children, true);
-                if (hits.length > 0) {
-                    aimTarget.copy(hits[0].point);
-                }
-            }
-            camera.lookAt(aimTarget);
-
-            // Parallax-correct aim: compute yaw/pitch from head to crosshair target
-            aimDirection.copy(aimTarget).sub(headPosition);
-            const aimFlatLen = Math.hypot(aimDirection.x, aimDirection.z);
-            if (aimFlatLen > 1e-6) {
-                aimYaw = Math.atan2(-aimDirection.x, -aimDirection.z);
-                aimPitch = Math.atan2(aimDirection.y, aimFlatLen);
-            }
-        }
+        cameraSystem.attachMesh(myId);
+        cameraSystem.update(yaw,pitch,dt);
         
         // Update mini scoreboard every tick
         hud.updateScoreboard(playerScores, myId, currentMatchState);
         // ── Build & send input packet ────────────────────────────────────────────
         const validatedInputs = validatePlayerInput(inputs);
-        const validatedPitch = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, aimPitch));
+        const validatedPitch = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, cameraSystem.aimPitch));
 
         inputSeq++;
         const inputPacket = {
             seq:    inputSeq,
             inputs: { ...validatedInputs },
-            yaw: aimYaw,
+            yaw: cameraSystem.aimYaw,
             pitch: validatedPitch,
             dt,
         };
@@ -1379,6 +1324,11 @@ function startGame() {
     channel.on('heroSet', () => {
         if (heroSelect) heroSelect.hide();
     });
+
+    channel.onDisconnect(() => {
+        isConnected = false;
+        showConnectionError('Disconnected from server. Please refresh the page to try again.');
+    });
 }
 
 // Add Play button event listener
@@ -1406,7 +1356,10 @@ window.addEventListener('DOMContentLoaded', () => {
 
     const backBtn = document.getElementById('connection-error-back-btn');
     if (backBtn) {
-        backBtn.addEventListener('click', backToMenu);
+        backBtn.addEventListener('click', () => {
+            audioManager.stopLoopInterfaceSound('menuLoop');
+            backToMenu();
+        })
     }
     const usernameInput = document.getElementById('username-input');
     const savedName = localStorage.getItem('lastUsername');
@@ -1441,6 +1394,6 @@ window.addEventListener('click', (e) => {
 function animate() {
     requestAnimationFrame(animate);
 
-    renderer.render(scene, camera);
+    renderer.render(scene, cameraSystem.camera);
 }
 animate();

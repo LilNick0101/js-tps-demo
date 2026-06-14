@@ -27,7 +27,7 @@ const HERO_DATA = [
         name: 'Sven',
         role: 'DPS · SMG',
         color: '#9933ff',
-        desc: 'Shadow alien wizard that is also a close quarters menace!',
+        desc: 'Shadow alien wizard and a close quarters menace!',
         abilities: [
             { key: 'Q', name: 'Shadow Lightning', desc: 'Call down 3 lightning strikes in a line ahead of you.' },
             { key: 'E', name: 'Shadow Teleport', desc: 'Dash 5 m forward instantly.' },
@@ -99,7 +99,7 @@ const HERO_DATA = [
         name: 'Templar',
         role: 'Support · Assault Rifle',
         color: '#18d049',
-        desc: 'Holy knight support who can heal allies and punish enemies with a powerful smite. A versatile pick for players who like to adapt to their team\'s needs.',
+        desc: 'Holy knight support who can heal allies and punish enemies with a powerful hammer of justice. A versatile pick for players who like to adapt to their team\'s needs.',
         abilities: [
             { key: '1', name: 'Holy Water', desc: 'Throw a flask of holy water that shatters on impact, healing allies and damaging enemies in an area.' },
             { key: '2', name: 'Healing Rite', desc: 'Channel for 6 seconds, continuously healing all allies in an 80° cone ahead and restoring 30% of damage dealt to yourself.' },
@@ -116,28 +116,20 @@ class HeroSelect {
         this.container = container;
         this._overlay  = null;
         this._callback = null;
+        this._tooltip = null;
         this._build();
     }
 
     _build() {
         const overlay = document.createElement('div');
         overlay.id = 'hero-select-overlay';
-        overlay.style.cssText = `
-            position: fixed; inset: 0;
-            background: rgba(0,0,0,0.85);
-            display: flex; flex-direction: column;
-            align-items: center; justify-content: center;
-            z-index: 9999;
-            font-family: 'Segoe UI', sans-serif;
-        `;
 
         const title = document.createElement('h1');
         title.textContent = 'Choose Your Hero';
-        title.style.cssText = 'color:#fff; font-size:2rem; margin-bottom:32px; letter-spacing:2px; font-family: "Robot Heroes", Arial, sans-serif;';
         overlay.appendChild(title);
 
         const row = document.createElement('div');
-        row.style.cssText = 'display:flex; gap:24px; flex-wrap:wrap; justify-content:center;';
+        row.className = "select-row"
         overlay.appendChild(row);
 
         for (const hero of HERO_DATA) {
@@ -145,34 +137,17 @@ class HeroSelect {
         }
 
         this._overlay = overlay;
+
+        const tooltip = document.createElement('div');
+        tooltip.id = 'hero-card-tooltip';
+        tooltip.style.display = 'none';
+        document.body.appendChild(tooltip);
+        this._tooltip = tooltip;
     }
 
-    _buildCard(hero) {
-        const card = document.createElement('div');
-        card.style.cssText = `
-            background: rgba(255,255,255,0.05);
-            border: 2px solid ${hero.color}44;
-            border-radius: 12px;
-            padding: 24px 20px;
-            width: 220px;
-            cursor: pointer;
-            transition: border-color 0.2s, transform 0.15s, background 0.2s;
-            color: #eee;
-            user-select: none;
-        `;
-
-        card.addEventListener('mouseenter', () => {
-            card.style.borderColor = hero.color;
-            card.style.background  = `rgba(255,255,255,0.10)`;
-            card.style.transform   = 'translateY(-4px)';
-        });
-        card.addEventListener('mouseleave', () => {
-            card.style.borderColor = `${hero.color}44`;
-            card.style.background  = 'rgba(255,255,255,0.05)';
-            card.style.transform   = 'none';
-        });
-
-        card.innerHTML = `
+    _showTooltip(hero, x, y) {
+        const tooltip = this._tooltip;
+        tooltip.innerHTML = `
             <div style="font-size:1.5rem; font-weight:700; color:${hero.color}; margin-bottom:4px; font-family: 'Robot Heroes', Arial, sans-serif;">${hero.name}</div>
             <div style="font-size:0.78rem; color:#aaa; margin-bottom:12px;">${hero.role}</div>
             <div style="font-size:0.85rem; margin-bottom:16px; line-height:1.4;">${hero.desc}</div>
@@ -190,6 +165,48 @@ class HeroSelect {
                     </div>
                 </div>
             `).join('')}
+        `;
+        tooltip.style.display = 'block';
+        tooltip.style.borderColor = hero.color;
+        tooltip.style.left = `${x + 16}px`;
+        tooltip.style.top  = `${y + 16}px`;
+    }
+
+    _hideTooltip() {
+        this._tooltip.style.display = 'none';
+    }
+
+    _buildCard(hero) {
+        const card = document.createElement('div');
+        card.className = 'hero-card';
+        card.style.borderColor = `${hero.color}44`;
+
+        card.addEventListener('mouseenter', (e) => {
+            card.style.borderColor = hero.color;
+            card.style.background  = `rgba(255,255,255,0.10)`;
+            card.style.transform   = 'translateY(-4px)';
+            this._showTooltip(hero, e.clientX, e.clientY);
+        });
+
+        // --- ADD THIS LISTENER ---
+        card.addEventListener('mousemove', (e) => {
+            if (this._tooltip.style.display === 'block') {
+                this._tooltip.style.left = `${e.clientX + 16}px`;
+                this._tooltip.style.top  = `${e.clientY + 16}px`;
+            }
+        });
+
+        card.addEventListener('mouseleave', () => {
+            card.style.borderColor = `${hero.color}44`;
+            card.style.background  = 'rgba(255,255,255,0.05)';
+            card.style.transform   = 'none';
+            this._hideTooltip();
+        });
+
+        card.innerHTML = `
+            <div style="font-size:1.5rem; font-weight:700; color:${hero.color}; margin-bottom:4px; font-family: 'Robot Heroes', Arial, sans-serif;">${hero.name}</div>
+            <div style="font-size:0.78rem; color:#aaa; margin-bottom:12px;">${hero.role}</div>
+            <div style="font-size:0.85rem; margin-bottom:16px; line-height:1.4;">${hero.desc}</div>
         `;
 
         card.addEventListener('click', () => this._select(hero.id));

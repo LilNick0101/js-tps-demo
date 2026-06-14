@@ -12,8 +12,10 @@ const StateHistory = require('./world/StateHistory');
 const MovementSystem = require('./systems/MovementSystem');
 const NetworkSystem = require('./systems/NetworkSystem');
 const CombatSystem = require('./systems/CombatSystem');
+const StatusEffectsSystem = require('./systems/StatusEffectsSystem')
 const PickupSystem = require('./systems/PickupSystem');
 const HeroSystem   = require('./systems/HeroSystem');
+const ModifiersSystem  = require('./systems/ModifiersSystem');
 const { decode } = require('../shared/utils/Codec');
 const GameState = require('./GameState');
 const NetworkGameStateFacade = require('./facades/NetworkGameStateFacade');
@@ -27,6 +29,7 @@ const {
     PLAYER_MASS, 
     TICK_RATE
 } = require('../shared/constants');
+const { modifyShader } = require('three/examples/jsm/Addons.js');
 
 const app = express();
 const server = http.createServer(app);
@@ -45,18 +48,21 @@ app.get('/', (req, res) => {
 // --- ECS & PHYSICS INITIALIZATION ---
 const ecsWorld = new World();
 const physicsWorld = new PhysicsWorld();
-const combatSystem = new CombatSystem(ecsWorld, physicsWorld, io);
+
+const modifiers    = new ModifiersSystem(ecsWorld, io);
+const statusEffectsSystem = new StatusEffectsSystem(ecsWorld, modifiers,io)
+const combatSystem = new CombatSystem(ecsWorld, physicsWorld, modifiers, io);
 const collisionSystem = new CollisionSystem(physicsWorld, io);
 
-const movementSystem = new MovementSystem(ecsWorld,physicsWorld);
+const movementSystem = new MovementSystem(ecsWorld,physicsWorld,modifiers);
 const botSystem = new BotSystem(ecsWorld, physicsWorld, movementSystem, combatSystem);
 const respawnSystem = new RespawnSystem(ecsWorld, botSystem, io);
-const damageSystem = new DamageSystem(ecsWorld, collisionSystem, botSystem, io, respawnSystem);
+const damageSystem = new DamageSystem(ecsWorld, collisionSystem, botSystem, io, respawnSystem, modifiers);
 
 const networkSystem = new NetworkSystem(ecsWorld);
 
-const heroSystem    = new HeroSystem(ecsWorld, physicsWorld, damageSystem, io);
-const pickupSystem  = new PickupSystem(ecsWorld, io, heroSystem);
+const heroSystem    = new HeroSystem(ecsWorld, physicsWorld, damageSystem, statusEffectsSystem, modifiers,io);
+const pickupSystem  = new PickupSystem(ecsWorld, io, statusEffectsSystem);
 // Give MovementSystem access to HeroSystem so it can apply slow effects
 movementSystem.heroSystem = heroSystem;
 // Give DamageSystem access to HeroSystem for invulnerability and Iron Stand shield callbacks
@@ -78,7 +84,7 @@ ecsWorld.physicsWorld = physicsWorld;
 
 const networkGameStateFacade = new NetworkGameStateFacade(io, networkSystem, stateHistory);
 
-const gameState = new GameState(ecsWorld, physicsWorld, networkGameStateFacade, respawnSystem, botSystem, movementSystem, damageSystem, collisionSystem, combatSystem, pickupSystem, heroSystem);
+const gameState = new GameState(ecsWorld, physicsWorld, networkGameStateFacade, respawnSystem, botSystem, movementSystem, damageSystem, combatSystem, pickupSystem, modifiers, heroSystem);
 damageSystem.gameState = gameState;
 
 // Initialize physics world and spawn bots
@@ -226,9 +232,9 @@ io.onConnection((channel) => {
         const eid = ecsWorld.getEntityBySocket(channel.id);
         if (eid === undefined) return;
 
-        // Sanitize name: strip to 20 chars, strip HTML
+        // Sanitize name: strip to 32 chars, strip HTML
         const rawName = String(data.name || '').replace(/[<>]/g, '').trim();
-        const name = rawName.slice(0, 20) || 'Player';
+        const name = rawName.slice(0, 32) || 'Player';
         ecsWorld.setEntityName(eid, name);
         console.log(`Player ${channel.id} set username to: ${name}`);
     });

@@ -38,11 +38,9 @@ class RenderSystem {
         // Kyoukan – Heroic Aura active tint state
         this._heroicAuraActive = new Map();
         // Healing Rite glint meshes keyed by entity ID
-        this._healingGlints = new Map();
+        this._attachedMeshes = new Map(); // For meshes attached to entities (e.g. Siphon Life cones), keyed by entity ID
 
-        this._healingParticles = new Map();
-
-        this._glintAnimators = new Map(); // TextureAnimators for healing glints keyed by entity ID
+        this._animators = new Map(); // TextureAnimators for healing glints keyed by entity ID
 
         // VFX timeout tracking prevents orphaned timers on scene teardown.
         this._vfxTimeouts = new Set();
@@ -99,6 +97,8 @@ class RenderSystem {
         }
 
         this.scene.add(group);
+        this._attachedMeshes.set(socketId, new Map());
+        this._animators.set(socketId, new Map());
         this.entityMeshes.set(socketId, group);
         
         return group;
@@ -164,9 +164,9 @@ class RenderSystem {
         mesh.rotation.y = playerData.yaw;
 
         // Update gun pitch (children[1] is the gun)
-        if (this._healingGlints.has(socketId)) {
-            const glint = this._glintAnimators.get(socketId);
-            glint.update(Date.now());
+        const animators = this._animators.get(socketId);
+        for (const [key, animator] of animators) {
+            animator.update(Date.now());
         }
         if (mesh.children[1]) {
             mesh.children[1].rotation.x = playerData.pitch;
@@ -453,8 +453,8 @@ class RenderSystem {
         this.bulletTracers.forEach((tracer) => {
             if (tracer.line) {
                 this.scene.remove(tracer.line);
-                tracer.line.geometry.dispose();
-                tracer.line.material.dispose();
+                if (tracer.line.geometry) tracer.line.geometry.dispose();
+                if (tracer.line.material) tracer.line.material.dispose();
             }
         });
         this.bulletTracers.clear();
@@ -475,8 +475,8 @@ class RenderSystem {
         // Remove pickup meshes
         this.pickupMeshes.forEach((mesh) => {
             this.scene.remove(mesh);
-            mesh.geometry.dispose();
-            mesh.material.dispose();
+            if (mesh.geometry) mesh.geometry.dispose();
+            if (mesh.material) mesh.material.dispose();
         });
         this.pickupMeshes.clear();
         this._pickupPhase.clear();
@@ -551,7 +551,7 @@ class RenderSystem {
         mesh.visible = !!pickupData.active;
         // Gentle rotation for visual interest
         mesh.rotation.y += 0.03;
-        // Float up/down from frame clock, not Date.now per pickup.
+        
         let phase = this._pickupPhase.get(id);
         if (phase == null) {
             phase = Math.random() * Math.PI * 2;
@@ -1357,12 +1357,12 @@ class RenderSystem {
         if (!mesh) return;
         
         // Create semitransparent glint texture mesh
+        if (this._attachedMeshes.get(id)?.has('healingRiteGlint')) return; // already exists
         const glintGeom = new THREE.CapsuleGeometry(0.8, 1.4, 4, 8);
-        const glintMat = this._glintAnimate(id,this._glintMat());;
+        const glintMat = this._glintAnimate(id, 'healingRiteGlint', this._glintMat());
         const glintMesh = new THREE.Mesh(glintGeom, glintMat);
         glintMesh.position.y = 1.2;
-        mesh.add(glintMesh);
-        this._healingGlints.set(id, glintMesh);
+        this.attachMeshToEntity(glintMesh, id, 'healingRiteGlint');
     }
 
     _glintMat() {
@@ -1377,9 +1377,11 @@ class RenderSystem {
         
     }
 
-    _glintAnimate(id,texture,color=0x18d049) {
+    _glintAnimate(id, key, texture, color=0x18d049) {
         const animate = new TextureAnimator(texture,20,20); // cols, rows, totalFrames, duration
-        this._glintAnimators.set(id, animate);
+        const animators = this._animators.get(id) ?? new Map();
+        animators.set(key, animate);
+        this._animators.set(id, animators);
         return new THREE.MeshBasicMaterial({
             color: color,
             transparent: true,
@@ -1390,14 +1392,7 @@ class RenderSystem {
     }
 
     vfxHealingRiteRemoveGlint({ id } = {}) {
-        const glintMesh = this._healingGlints.get(id);
-        if (glintMesh) {
-            const parentMesh = id ? this.entityMeshes.get(id) : null;
-            if (parentMesh) parentMesh.remove(glintMesh);
-            if (glintMesh.geometry) glintMesh.geometry.dispose();
-            if (glintMesh.material) glintMesh.material.dispose();
-            this._healingGlints.delete(id);
-        }
+        this.detachMeshFromEntity(id, 'healingRiteGlint');
     }
 
     vfxHealingRiteTick({ id, x, y, z } = {}) {
@@ -1460,19 +1455,14 @@ class RenderSystem {
             const z = THREE.MathUtils.randFloatSpread( 3 );
             vertices.push( x, y + 0.5, z );
         }
+        if (this._attachedMeshes.get(id)?.has('healingVfx')) return; // already exists
         const geometry = new THREE.BufferGeometry();
         geometry.setAttribute( 'position', new THREE.Float32BufferAttribute( vertices, 3 ) );
         const material = new THREE.PointsMaterial( { color: 0x18d049, transparent: true, opacity: 0.75, depthWrite: false } );
         const particles = new THREE.Points( geometry, material );
-        mesh.add(particles);
-        this._healingParticles.set(id, particles);
+        this.attachMeshToEntity(particles, id, 'healingVfx');
         this._scheduleOwnedTimeout(() => {
-            geometry.dispose();
-            if (particles.material) particles.material.dispose();
-            const parentMesh = id ? this.entityMeshes.get(id) : null;
-            if (parentMesh) parentMesh.remove(particles);
-            this.scene.remove(particles);
-            this._healingParticles.delete(id);
+            this.detachMeshFromEntity(id, 'healingVfx');
         }, 800, id ?? null);
     }
 
@@ -1481,24 +1471,60 @@ class RenderSystem {
         if (!mesh) return;
         
         // Create semitransparent glint texture mesh
+        if (this._attachedMeshes.get(id)?.has('armorVfx')) return; // already exists
         const glintGeom = new THREE.CapsuleGeometry(0.8, 1.4, 4, 8);
-        const glintMat = this._glintAnimate(id,this._glintMat(),0xffcc00);
+        const glintMat = this._glintAnimate(id,'armorVfx',this._glintMat(),0xffcc00);
         const glintMesh = new THREE.Mesh(glintGeom, glintMat);
         glintMesh.position.y = 1.2;
-        mesh.add(glintMesh);
-        this._healingGlints.set(id, glintMesh);
+        this.attachMeshToEntity(glintMesh, id, 'armorVfx');
         this._scheduleOwnedTimeout(() => {
-            if (glintMesh.geometry) glintMesh.geometry.dispose();
-            if (glintMesh.material) glintMesh.material.dispose();
-            const parentMesh = id ? this.entityMeshes.get(id) : null;
-            if (parentMesh) parentMesh.remove(glintMesh);
-            this._healingGlints.delete(id);
+            this.detachMeshFromEntity(id, 'armorVfx');
         }, 800, id ?? null);
     }
 
     hasGlint(id){
-        return this._healingGlints.has(id);
+        return this._attachedMeshes.get(id)?.has('healingRiteGlint') || this._attachedMeshes.get(id)?.has('armorVfx') || false;
     }
+
+    attachMeshToEntity(mesh, id, key){
+        const entityMesh = this.entityMeshes.get(id);
+        const attached = this._attachedMeshes.get(id) ?? new Map();
+        if (entityMesh) {
+            entityMesh.add(mesh);
+            attached.set(key, mesh);
+            this._attachedMeshes.set(id, attached);
+            return true;
+        }
+        return false;
+    }
+    
+    detachMeshFromEntity(id, key){
+    const attached = this._attachedMeshes.get(id);
+    if (attached) {
+        const mesh = attached.get(key);
+        if (mesh) {
+            // 1. Remove from its actual parent container, wherever it lives
+            if (mesh.parent) {
+                mesh.parent.remove(mesh);
+            }
+            // 2. Clean up its texture animator so it stops rendering/updating
+            const animators = this._animators.get(id);
+            if (animators && animators.has(key)) {
+                animators.delete(key);
+            }
+            // 3. Dispose of geometries and materials to clear GPU memory
+            if (mesh.geometry) mesh.geometry.dispose();
+            if (mesh.material) {
+                if (mesh.material.map) mesh.material.map.dispose();
+                mesh.material.dispose();
+            }
+            attached.delete(key);
+            if (attached.size === 0) this._attachedMeshes.delete(id);
+            return true;
+        }
+    }
+    return false;
+}
     // ── Internal flash helpers ──────────────────────────────────────────────
 
     _flashBeam(from, to, color, radius, durationMs, ownerKey = null) {

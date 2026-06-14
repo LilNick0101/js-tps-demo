@@ -7,13 +7,13 @@ const {
 const { PLAYER_MOVE_SPEED, PLAYER_JUMP_FORCE, PHYSICS_TIMESTEP, DASH_COOLDOWN_FRAMES, AIR_CONTROL_FACTOR, ABILITY_COOLDOWNS } = require('../../shared/constants');
 
 class MovementSystem {
-    constructor(ecsWorld, physicsWorld) {
+    constructor(ecsWorld, physicsWorld, modifiers) {
         /** @type {import('../world/World')} */
         this.ecsWorld     = ecsWorld;
         /** @type {import('../world/PhysicsWorld')} */
         this.physicsWorld = physicsWorld;
-        /** @type {import('./HeroSystem') | null} Injected after HeroSystem is created */
-        this.heroSystem = null;
+        /** @type {import('./ModifiersSystem')} Injected after HeroSystem is created */
+        this.modifiers = modifiers;
     }
 
     checkJump(eid, bodyId) {

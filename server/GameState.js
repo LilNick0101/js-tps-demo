@@ -21,18 +21,28 @@ const MatchSystem = require('./systems/MatchSystem');
 
 // server/GameState.js
 class GameState {
-    constructor(ecsWorld, physicsWorld,metworkGameStateFacade, respawnSystem, botSystem, movementSystem, damageSystem, collisionSystem, combatSystem, pickupSystem, heroSystem) {
+    constructor(ecsWorld, physicsWorld, metworkGameStateFacade, respawnSystem, botSystem, movementSystem, damageSystem, combatSystem, pickupSystem, modifiers ,heroSystem) {
+        /** @type {import('./world/World')} */
         this.ecsWorld = ecsWorld;
         /** @type {import('./world/PhysicsWorld')} */
         this.physicsWorld = physicsWorld;
+        /** @type {import('./facades/NetworkGameStateFacade')} */
         this.networkGameStateFacade = metworkGameStateFacade;
+        /** @type {import('./systems/RespawnSystem')} */
         this.respawnSystem = respawnSystem;
+        /** @type {import('./systems/BotSystem')} */
         this.botSystem = botSystem;
+        /** @type {import('./systems/MovementSystem')} */
         this.movementSystem = movementSystem;
+        /** @type {import('./systems/DamageSystem')} */
         this.damageSystem = damageSystem;
-        this.collisionSystem = collisionSystem;
+        /** @type {import('./systems/CombatSystem')} */
         this.combatSystem = combatSystem;
+        /** @type {import('./systems/PickupSystem')} */
         this.pickupSystem = pickupSystem;
+        /** @type {import('./systems/ModifiersSystem')} */
+        this.modifiers  = modifiers;
+        /** @type {import('./systems/HeroSystem')} */
         this.heroSystem = heroSystem;
         this.turn = 0; // Game tick counter
         this.status = 'running'; // running, paused, overtime, finished
@@ -92,7 +102,7 @@ class GameState {
             
             // Create physics body for bot
         const botBody = this.physicsWorld.createPlayerBody(x, y, z, PLAYER_RADIUS, PLAYER_MASS);
-        this.physicsWorld.addBody(`bot_${botEid}`, botBody);
+        this.physicsWorld.addBody(this.ecsWorld.getBotIdString(botEid), botBody);
     }
 
     ensureEntityTeams() {
@@ -179,6 +189,10 @@ class GameState {
         // Remove dead bullets
         for (const eid of bulletsToRemove) {
             this.ecsWorld.removeBulletEntity(eid);
+        }
+
+        if (this.modifiers) {
+            this.modifiers.update();
         }
 
         // Process hero abilities

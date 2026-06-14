@@ -49,7 +49,7 @@ module.exports = {
     MODES_CONFIG,
     ACTIVE_GAME_MODE,
     POST_MATCH_RESTART_MS,
-    NUM_BOTS: 0, // default number of bots
+    NUM_BOTS: 9, // default number of bots
 
     // Respawn
     RESPAWN_DELAY: 4000,   // ms before a dead entity respawns
@@ -254,7 +254,7 @@ module.exports = {
         // Father Callas – Shadow Realm Banish
         SHADOW_REALM_CD:            3600, // 60 s
         SHADOW_REALM_DURATION:       360, // 6 s in shadow realm
-        SHADOW_REALM_RETURN_DAMAGE:   40, // damage on return
+        SHADOW_REALM_RETURN_DAMAGE:   35, // damage on return
         SHADOW_REALM_RANGE:          20.0, // max targeting range
 
         // Selene – Crystal Smash
@@ -313,7 +313,8 @@ module.exports = {
         FATAL_FLATULENCE_FART_INTERVAL:  60,   // 1 s between farts
         FATAL_FLATULENCE_DAMAGE:         8,    // per tick per enemy (non-lethal)
         FATAL_FLATULENCE_RADIUS:         12.0,  // fart cloud radius
-        FATAL_FLATULENCE_TICK_INTERVAL:  15,   // damage ticks every 15 ticks
+        FATAL_FLATULENCE_TICK_INTERVAL:  14,   // damage ticks every 15 ticks
+        FATAL_FLATULENCE_SLOW_STRENGTH:  0.45,
 
         // Kyoukan – Arrow of Gratitude
         ARROW_OF_GRATITUDE_CD:                540,  // 9 s

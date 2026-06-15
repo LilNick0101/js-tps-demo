@@ -6,7 +6,7 @@ This is a demo of a multiplayer third person shooter game built with Three.js an
 - Basic movement and shooting mechanics.
 - 7 Heroes with unique abilities.
 - An arena with a simple layout, filled with pickup items.
-- Team deathmatch mode.
+- Working Team deathmatch mode.
 - Scoreboard and killstreak tracking.
 - Bot players to use for practice.
 

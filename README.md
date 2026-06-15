@@ -1,4 +1,4 @@
-# Multiplayer Third Person Shooter demo (Three.js + Rapier3d)
+# Multiplayer Third Person Shooter demo (Three.js + Geckos.io + Rapier3d)
 
 This is a demo of a multiplayer third person shooter game built with Three.js and Rapier3d. The game features multiplayer action with basic movement, shooting mechanics, a hero shooter component and simple physics.
 

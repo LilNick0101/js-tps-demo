@@ -147,8 +147,8 @@ class BotSystem {
 
         for (let i = 0; i < candidates.length; i++) {
             const targetEid = candidates[i];
-            const botId = this.ecsWorld.getBotIdString(botEid);
-            const targetId = this.ecsWorld.getSocketByEntity(targetEid) || this.ecsWorld.getBotIdString(targetEid);
+            const botId = this.ecsWorld.getEntityId(botEid);
+            const targetId = this.ecsWorld.getEntityId(targetEid);
             if (targetEid === botEid) continue;
             if (!this.physicsWorld.checkLineOfSight(botId, targetId)) continue;// TODO: check LOS against physics world before targeting
             if (Health.current[targetEid] <= 0) continue; // skip dead

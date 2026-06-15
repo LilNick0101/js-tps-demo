@@ -155,7 +155,7 @@ class GameState {
             const y = Position.y[eid];
             const z = Position.z[eid];
 
-            const bodyId = this.ecsWorld.getSocketByEntity(eid) || this.ecsWorld.getBotIdString(eid);
+            const bodyId = this.ecsWorld.getEntityId(eid);
             const hasInput = Controller.forward[eid] || Controller.backward[eid] ||
                         Controller.left[eid]    || Controller.right[eid];
 
@@ -173,6 +173,7 @@ class GameState {
         const deltaTime = 1 / TICK_RATE; // Time per tick in seconds
         for (const eid of this.ecsWorld.getBullets()) {
             // Update position based on velocity (velocity is in units/second, so multiply by deltaTime)
+            if (Bullet.type[eid] !== 0) continue; // Skip physics projectiles, they are moved by the physics engine
             Position.x[eid] += Velocity.vx[eid] * deltaTime;
             Position.y[eid] += Velocity.vy[eid] * deltaTime;
             Position.z[eid] += Velocity.vz[eid] * deltaTime;

@@ -47,7 +47,7 @@ class MovementSystem {
         if (!this.physicsWorld) return; // Wait for physics to initialize
         
         for (const eid of this.ecsWorld.getAllPlayerAndBotEntities()) {
-            const bodyId = this.ecsWorld.getSocketByEntity(eid) || this.ecsWorld.getBotIdString(eid);
+            const bodyId = this.ecsWorld.getEntityId(eid);
             if (bodyId) {
                 this.checkJump(eid, bodyId);
             }
@@ -124,10 +124,7 @@ class MovementSystem {
 
     jumpEntity(bodyId) {
         const eid = this.ecsWorld.getEntityEid(bodyId);
-        if (!eid) {
-            console.error(`MovementSystem: could not resolve entity for bodyId ${bodyId}`);
-            return;
-        }
+        
         if (Jump.jumpsRemaining[eid] <= 0 || Jump.jumpTimer[eid] > 0) {
             return; 
         }

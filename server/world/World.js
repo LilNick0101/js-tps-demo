@@ -50,6 +50,9 @@ class World {
         this.bulletEntities = new Set();
         this.botEntities = new Set();
         this.pickupEntities = new Set();
+
+        this.physicsObjects = new Map();
+        this.physicsObjectsIds = new Map();
         
         // Bot ID counter
         this.nextBotId = 1;
@@ -217,7 +220,12 @@ class World {
         Bot.shootCooldown[eid] = 0;
         Bot.wanderTimer[eid] = 0;
         Bot.state[eid] = 0; // Start in wander state
-        
+
+        const botId = this.getBotIdString(eid)
+
+        this.socketToEntity.set(botId, eid);
+        this.entityToSocket.set(eid, botId);
+
         // Track bot
         this.botEntities.add(eid);
 
@@ -244,7 +252,7 @@ class World {
      * @param {number} lifetime - How long bullet exists (ticks)
      * @returns {number} Entity ID
      */
-    createBulletEntity(ownerEid, x, y, z, vx, vy, vz, lifetime = 100) {
+    createBulletEntity(ownerEid, x, y, z, vx, vy, vz, lifetime = 100, type = 0) {
         const eid = addEntity(this.world);
         
         addComponent(this.world, Position, eid);
@@ -258,6 +266,7 @@ class World {
         Velocity.vz[eid] = vz;
         
         addComponent(this.world, Bullet, eid);
+        Bullet.type[eid] = type
         Bullet.life[eid] = lifetime;
         Bullet.owner[eid] = ownerEid;
         
@@ -266,10 +275,19 @@ class World {
         return eid;
     }
 
+    createPhysicsProjectileEntity(id, ownerId,x, y, z, vx, vy, vz, lifetime = 100, type = 0) {
+        const eid = this.createBulletEntity(ownerId, x, y, z, vx, vy, vz, lifetime, type);
+        addComponent(this.world, PhysicsBody, eid);
+        PhysicsBody.bodyId[eid] = 0; // Will be set when physics body is created
+        this.physicsObjects.set(id, eid);
+        this.physicsObjectsIds.set(eid, id);
+        return eid;
+    }
+
     syncPhysicsToECS(physicsWorld) {
         const physicsEntities = physicsQuery(this.world);
         for (const eid of physicsEntities) {
-            const id = this.getEntityId(eid);
+            const id = this.getEntityId(eid) ?? this.getPhysicsIdFromEntity(eid) ?? null;
             if (!id) continue;
             const body = physicsWorld.getBody(id.toString());
             if (!body) continue;
@@ -307,6 +325,11 @@ class World {
      */
     removeBulletEntity(eid) {
         this.bulletEntities.delete(eid);
+        if(this.physicsObjectsIds.has(eid)){
+            const id = this.physicsObjectsIds.get(eid);
+            this.physicsObjectsIds.delete(eid);
+            this.physicsObjects.delete(id);
+        }
         removeEntity(this.world, eid);
     }
 
@@ -358,6 +381,7 @@ class World {
      * Get entity ID from socket ID
      */
     getEntityBySocket(socketId) {
+        //console.log(`Getting entity for socketId ${socketId}`);
         return this.socketToEntity.get(socketId);
     }
 
@@ -412,11 +436,19 @@ class World {
     }
 
     getEntityId(eid) {
-        return this.getSocketByEntity(eid) ?? this.getBotIdString(eid);
+        return this.getSocketByEntity(eid);
     }
 
     getEntityIds(eids) {
         return eids.map(eid => this.getEntityId(eid));
+    }
+
+    getPhysicsEntityById(id) {
+        return this.physicsObjects.get(id);
+    }
+
+    getPhysicsIdFromEntity(eid) {
+        return this.physicsObjectsIds.get(eid);
     }
 
     /**
@@ -457,7 +489,7 @@ class World {
     }
 
     getEntityEid(id) {
-        return this.getEntityBySocket(id) ?? this.getBotEntityById(id);
+        return this.getEntityBySocket(id);
     }
 
     getBotIdString(botEid) {

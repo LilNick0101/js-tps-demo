@@ -63,6 +63,7 @@ const Dash = defineComponent({
 
 // Bullet component (lifetime timer and owner reference)
 const Bullet = defineComponent({
+    type: Types.ui8, // For client effects: 0 = standard, 1 = Shock grenade, 2 = Holy Water
     life: Types.ui16,
     owner: Types.ui16, // Entity ID of the owner
 });

@@ -157,6 +157,7 @@ class NetworkSystem {
                 vy: Velocity.vy[eid],
                 vz: Velocity.vz[eid],
                 life: Bullet.life[eid],
+                type: Bullet.type[eid],
             });
         }
 

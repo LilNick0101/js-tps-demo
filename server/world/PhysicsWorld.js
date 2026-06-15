@@ -335,18 +335,30 @@ class PhysicsWorld {
     /**
      * Create a projectile body (small sphere)
      */
-    createProjectileBody(x, y, z, radius, vx, vy, vz) {
+    createProjectileBody(x, y, z, radius, vx, vy, vz, options = {}) {
         if (!this.world) return null;
+        
+        const {
+            gravityScale = 1.0,
+            restitution = 0.4,
+            friction = 0.5,
+            density = 0.1,
+            angularDamping = 0.5
+        } = options;
         
         const rigidBodyDesc = RAPIER.RigidBodyDesc.dynamic()
             .setTranslation(x, y, z)
             .setLinvel(vx, vy, vz)
-            .setGravityScale(0.0); // Not affected by gravity
+            .setGravityScale(gravityScale)
+            .setAngularDamping(angularDamping);
         
         const rigidBody = this.world.createRigidBody(rigidBodyDesc);
         
         const colliderDesc = RAPIER.ColliderDesc.ball(radius)
-            .setDensity(0.1);
+            .setDensity(density)
+            .setRestitution(restitution)
+            .setFriction(friction)
+            .setCollisionGroups(PLAYER_MEMBERSHIP);
         
         this.world.createCollider(colliderDesc, rigidBody);
         

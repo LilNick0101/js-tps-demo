@@ -20,14 +20,16 @@ class RespawnSystem {
      * @param {string}                  [mapKey]    - key inside spawns.json to use
      */
     constructor(ecsWorld, botSystem, io, mapKey = RESPAWN_MAP) {
+        /** @type {import('../world/World')} */
         this.ecsWorld = ecsWorld;
+        /** @type {import('./BotSystem')} */
         this.botSystem = botSystem;
+        /** @type {object} */
         this.io = io;
         this.mapKey = mapKey;
 
         /** @type {Map<number, NodeJS.Timeout>} eid -> timeout handle */
         this.pending = new Map();
-        this._msgCounter = 0;
     }
 
     /**
@@ -135,9 +137,7 @@ class RespawnSystem {
             return false;
         }
 
-        const id = isPlayer
-            ? this.ecsWorld.getSocketByEntity(eid)
-            : this.ecsWorld.getBotIdString(eid);
+        const id = this.ecsWorld.getEntityId(eid);
 
         if (!id) {
             console.error(`RespawnSystem: could not resolve body id for eid ${eid}`);
@@ -168,11 +168,6 @@ class RespawnSystem {
             this.ecsWorld.physicsWorld.resetForces(id);
             body.setTranslation({ x, y, z }, true);
             body.setLinvel({ x: 0, y: 0, z: 0 }, true);
-
-            // Mirror to ECS
-            Velocity.vx[eid] = 0;
-            Velocity.vy[eid] = 0;
-            Velocity.vz[eid] = 0;
 
             // Reset jump and dash state so they work immediately after respawn
             Jump.isGrounded[eid] = 0;

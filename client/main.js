@@ -1082,6 +1082,8 @@ function setupNetworkHandlers() {
         const pickups = Array.isArray(decoded.pickups) ? decoded.pickups : [];
         const match = (decoded.match && typeof decoded.match === 'object') ? decoded.match : null;
 
+        // console.log(bullets)
+
         renderSystem.setFrameTime(now);
         if (match) {
             currentMatchState = { ...currentMatchState, ...match };
@@ -1187,7 +1189,7 @@ function setupNetworkHandlers() {
         bullets.forEach(b => {
             if (!b || typeof b !== 'object' || b.id == null) return;
             if (!renderSystem.hasMesh(b.id)) {
-                renderSystem.createBulletMesh(b.id);
+                renderSystem.createBulletMesh(b.id,b.type);
             }
             renderSystem.updateBulletMesh(b.id, b);
         });

@@ -65,6 +65,8 @@ class DamageSystem {
         const physicsWorld = this.collisionSystem.physicsWorld;
 
         for (const bulletEid of bullets) {
+            if (Bullet.type[bulletEid] !== 0) continue;
+            //console.log(Bullet.type[bulletEid])
             const ownerEid = Bullet.owner[bulletEid];
             const bulletRadius = 0.4;
 
@@ -125,7 +127,7 @@ class DamageSystem {
                 continue;
             }
 
-            if (worldHit) {
+            if (worldHit) { // Do not trigger for physics objects
                 this.io.emit('bulletImpact', {
                     x: worldHit.x,
                     y: worldHit.y,

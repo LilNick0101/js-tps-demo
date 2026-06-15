@@ -49,7 +49,7 @@ module.exports = {
     MODES_CONFIG,
     ACTIVE_GAME_MODE,
     POST_MATCH_RESTART_MS,
-    NUM_BOTS: 9, // default number of bots
+    NUM_BOTS: 0, // default number of bots
 
     // Respawn
     RESPAWN_DELAY: 4000,   // ms before a dead entity respawns
@@ -209,7 +209,8 @@ module.exports = {
 
         // Tamerlane
         SHOCK_GRENADE_CD:     600,  // 10 s
-        SHOCK_GRENADE_FUSE:   120,  // 2 s
+        SHOCK_GRENADE_FUSE:   80,  // 1.67 s
+        SHOCK_GRENADE_THROW_SPEED : 50,
         SHOCK_GRENADE_DAMAGE: 45,
         SHOCK_GRENADE_RADIUS: 7.0,
         SHOCK_GRENADE_SLOW:   180,  // ticks of slow effect

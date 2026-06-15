@@ -1,4 +1,9 @@
 import * as THREE from 'three';
+
+const BULLET_TYPES = {
+    STANDARD : 0,
+    SHOCK_GRENADE : 1
+}
 /**
  * RenderSystem - Syncs ECS entity positions to Three.js meshes
  */
@@ -107,19 +112,33 @@ class RenderSystem {
     /**
      * Create or update a bullet mesh for an entity
      * @param {number} eid - Entity ID
+     * @param {number} type - Visual type of the bullet
      * @returns {THREE.Mesh} The created mesh
      */
-    createBulletMesh(eid) {
+    createBulletMesh(eid,type = 0) {
         if (this.entityMeshes.has(eid)) {
             return this.entityMeshes.get(eid);
         }
 
         // Create bullet sphere
-        const geom = new THREE.SphereGeometry(0.2, 8, 8);
-        const mat = new THREE.MeshBasicMaterial({ 
-            color: 0xffff00,
-        });
-        const mesh = new THREE.Mesh(geom, mat);
+        let mesh = null;
+        let geom, mat;
+        switch(type){
+            case BULLET_TYPES.STANDARD:
+                geom = new THREE.SphereGeometry(0.2, 8, 8);
+                mat = new THREE.MeshBasicMaterial({ 
+                    color: 0xffff00,
+                });
+                mesh =  new THREE.Mesh(geom, mat);
+                break;
+            case BULLET_TYPES.SHOCK_GRENADE:
+                geom = new THREE.SphereGeometry(0.5, 8, 8);
+                mat = new THREE.MeshBasicMaterial({ 
+                    color: 0xff0000,
+                });
+                mesh =  new THREE.Mesh(geom, mat);
+                break;
+        }
         
         this.scene.add(mesh);
         this.entityMeshes.set(eid, mesh);

@@ -10,6 +10,7 @@ const {
     AbilityCooldowns,
     Pickup,
     Dash,
+    Bullet,
 } = require('../../shared/components');
 
 const {
@@ -18,6 +19,7 @@ const {
     ABILITY_COOLDOWNS: CD,
     PICKUP_TYPES,
     DAMAGE_TYPES,
+    GROUND_RESTITUTION,
 } = require('../../shared/constants');
 const heroConfigs = require('../../shared/config/heroes.json');
 
@@ -185,7 +187,7 @@ class HeroSystem {
          */
         this._holyWaters = [];
 
-        this._msgCounter = 0;
+        this._projCounter = 0;
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -530,21 +532,41 @@ class HeroSystem {
 
         const yaw   = Rotation.yaw[eid];
         const pitch = Rotation.pitch[eid];
-        const speed = 15; // m/s
+        const speed = CD.SHOCK_GRENADE_THROW_SPEED; // m/s
+        const spawnOffset = 2.2; // Distance in meters to spawn in front of the player
 
-        const vx =  -Math.sin(yaw) * Math.cos(pitch) * speed;
-        const vy =   Math.sin(pitch) * speed + 5; // add upward arc
-        const vz =  -Math.cos(yaw)   * Math.cos(pitch) * speed;
+        const dirX = -Math.sin(yaw) * Math.cos(pitch);
+        const dirY =  Math.sin(pitch);
+        const dirZ = -Math.cos(yaw) * Math.cos(pitch);
 
-        const grenade = {
-            ownerEid: eid,
-            x: Position.x[eid],
-            y: Position.y[eid] + 1,
-            z: Position.z[eid],
-            vx, vy, vz,
-            fuse: CD.SHOCK_GRENADE_FUSE,
-        };
-        this._grenades.push(grenade);
+        const vx = dirX * speed;
+        const vy = dirY * speed + 5; 
+        const vz = dirZ * speed;
+
+        const spawnX = Position.x[eid] + (dirX * spawnOffset);
+        const spawnY = Position.y[eid] + 1 + (dirY * spawnOffset); 
+        const spawnZ = Position.z[eid] + (dirZ * spawnOffset);
+
+        const projId = `proj_${this._projCounter++}`;
+
+        const body = this.physicsWorld.createProjectileBody(spawnX, spawnY, spawnZ, 1.5, vx, vy, vz,
+            {
+                gravityScale : 2.0,
+                friction : 5.6,
+                density : 5.3,
+                angularDamping : 5.0,
+                restitution : 0.2
+            }
+        );
+        this.physicsWorld.addBody(projId,body);
+        const grenade = this.ecsWorld.createPhysicsProjectileEntity(projId, eid, Position.x[eid], Position.y[eid] + 1, Position.z[eid], vx, vy, vz, 1000, 1); // Add 10 ticks just to be sure
+
+        this._grenades.push(
+            {
+                grenade : grenade,
+                fuse : CD.SHOCK_GRENADE_FUSE
+            }
+        );
 
         const id = this.ecsWorld.getEntityId(eid);
         this.io.emit('grenadeThrown', {
@@ -562,30 +584,33 @@ class HeroSystem {
 
         for (let i = 0; i < this._grenades.length; i++) {
             const g = this._grenades[i];
-            g.vy += gravity * dt;
-            g.x  += g.vx * dt;
-            g.y  += g.vy * dt;
-            // TODO: Implement this ability with Rapier
-            if (g.y + 0.5 > 0) {
-                g.y = 0.5; // simple ground collision
-                g.vy = 0;
-            }
-            g.z  += g.vz * dt;
             g.fuse--;
+
 
             if (g.fuse <= 0) {
                 // Explode
-                this._applyAOE(g.ownerEid, g.x, g.y, g.z,
+                const grenadeEid = g.grenade;
+                const ownerEid = Bullet.owner[grenadeEid];
+
+                const x = Position.x[grenadeEid];
+                const y = Position.y[grenadeEid];
+                const z = Position.z[grenadeEid];
+
+                this._applyAOE(ownerEid, x, y, z,
                     CD.SHOCK_GRENADE_RADIUS, CD.SHOCK_GRENADE_DAMAGE);
+
+                const bodyId = this.ecsWorld.getPhysicsIdFromEntity(grenadeEid);
+                this.physicsWorld.removeBody(bodyId);
+                this.ecsWorld.removeBulletEntity(grenadeEid);
 
                 // Slow all nearby entities
                 for (const targetEid of this.ecsWorld.getAllPlayerAndBotEntities()) {
-                    if (targetEid === g.ownerEid) continue;
+                    if (targetEid === ownerEid) continue;
                     if (Health.current[targetEid] <= 0) continue;
-                    if (this.damageSystem.isFriendlyFireBlocked(targetEid, g.ownerEid)) continue;
+                    if (this.damageSystem.isFriendlyFireBlocked(targetEid, ownerEid)) continue;
                     if (this.damageSystem.collisionSystem.sphereCollisionCheckCoord(
                         Position.x[targetEid], Position.y[targetEid], Position.z[targetEid],
-                        g.x, g.y, g.z,
+                        x, y, z,
                         CD.SHOCK_GRENADE_RADIUS
                     )) {
                         this.statusEffectsSystem.slow(
@@ -599,7 +624,7 @@ class HeroSystem {
                 //console.log(`[Heroes] Grenade exploded at (${g.x.toFixed(1)}, ${g.y.toFixed(1)}, ${g.z.toFixed(1)})`);
 
                 this.io.emit('grenadeExploded', {
-                    x: g.x, y: g.y, z: g.z,
+                    x: x, y: y, z: z,
                     radius: CD.SHOCK_GRENADE_RADIUS,
                 });
 

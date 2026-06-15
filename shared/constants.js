@@ -49,7 +49,7 @@ module.exports = {
     MODES_CONFIG,
     ACTIVE_GAME_MODE,
     POST_MATCH_RESTART_MS,
-    NUM_BOTS: 0, // default number of bots
+    NUM_BOTS: 9, // default number of bots
 
     // Respawn
     RESPAWN_DELAY: 4000,   // ms before a dead entity respawns

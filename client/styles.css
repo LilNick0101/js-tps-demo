@@ -130,18 +130,6 @@ canvas {
     overflow: hidden;
 }
 
-#health-text {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    color: white;
-    font-family: Arial, sans-serif;
-    font-weight: bold;
-    font-size: 14px;
-    text-shadow: 2px 2px 4px black;
-}
-
 #shield-bar {
     position: fixed;
     bottom: 56px;
@@ -652,6 +640,250 @@ canvas {
   }
 }
 
+/* HUD elements */
+
+#debug-overlay {
+    position: fixed;
+    bottom: 10px;
+    left: 10px;
+    color: #0f0;
+    font-family: monospace;
+    font-size: 12px;
+    line-height: 1.2em;
+    white-space: pre-line;
+    z-index: 1000;
+    pointer-events: none;
+}
+
+#top-bar {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 999;
+    pointer-events: none;
+}
+
+#top-bar .score-text {
+    font-size: 24px;
+    font-weight: bold;
+    text-shadow: 2px 2px 6px black;
+    z-index: 1000;
+    pointer-events: none;
+    padding: 10px 10px;
+}
+
+#match-timer {
+    color: #fff;
+    font-size: 18px;
+    font-weight: bold;
+    text-shadow: 2px 2px 6px black;
+    z-index: 1000;
+    pointer-events: none;
+}
+
+#health-fill{
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, #00cc00, #00ff00);
+    transition: width 0.3s, background 0.3s;
+}
+
+#shield-fill{
+    width: 0%;
+    height: 100%;
+    background: linear-gradient(90deg, #0055cc, #55aaff);
+    transition: width 0.25s;
+}
+
+#armor-fill{
+    width: 0%;
+    height: 100%;
+    background: linear-gradient(90deg, #996600, #ffcc00);
+    transition: width 0.25s;
+}
+
+.health-bar-text{
+    position:absolute; 
+    top:50%; 
+    left:50%;
+    transform:translate(-50%,-50%);
+    color:#fff4cc; 
+    font-family:Arial,sans-serif;
+    font-weight:bold; 
+    font-size:11px;
+    text-shadow:1px 1px 3px black;
+}
+
+#kill-message{
+    position: fixed;
+    text-align: center;
+    top: 40%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 36px;
+    font-weight: bold;
+    color: #ff4500;
+    text-shadow: 4px 4px 8px black;
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+    z-index: 1000;
+}
+
+#kill-feed{
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    width: 300px;
+    max-height: 200px;
+    overflow: hidden;
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+    color: white;
+    text-shadow: 2px 2px 4px black;
+    z-index: 900;
+}
+
+#kill-streak{
+    position: fixed;
+    top: 30%;
+    left: 50%;
+    text-align: center;
+    transform: translate(-50%, -30%);
+    font-size: 48px;
+    font-weight: bold;
+    color: #ffff00;
+    text-shadow: 4px 4px 8px black;
+    opacity: 0;
+    pointer-events: none;
+    z-index: 1000;
+}
+
+#crosshair {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 4px;
+    height: 4px;
+    background: white;
+    border: 1px solid black;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 1000;
+}
+
+#self-effect-bar{
+    position: fixed;
+    top: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+    z-index: 990;
+    pointer-events: none;
+}
+
+#screen-tint{
+    display: none;
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 880;
+}
+
+#screen-tint-label{
+    position: absolute;
+    top: 20%;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: 'Segoe UI', Arial, sans-serif;
+    font-size: 22px;
+    font-weight: bold;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.8);
+    text-shadow: 0 0 14px currentColor;
+    pointer-events: none;
+}
+
+/* Respawn screen */
+
+#respawn-title{
+    font-size: 52px;
+    font-weight: bold;
+    color: #ff4444;
+    text-shadow: 0 0 20px rgba(255,0,0,0.8), 4px 4px 8px black;
+    letter-spacing: 6px;
+    margin-bottom: 20px;
+}
+
+#respawn-subtext{
+    font-family: Arial, sans-serif;
+    font-size: 20px;
+    color: rgba(255,255,255,0.7);
+    letter-spacing: 2px;
+    margin-bottom: 10px;
+}
+
+#respawn-countdown{
+    font-family: Arial, sans-serif;
+    font-size: 80px;
+    font-weight: bold;
+    color: white;
+    text-shadow: 4px 4px 12px black;
+    line-height: 1; 
+}
+
+/* Match end screen */
+#match-end-overlay{
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.7);
+    z-index: 2600;
+    pointer-events: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    font-family: Arial, sans-serif;
+    color: #fff;
+}
+
+#match-end-title{
+    font-size: 52px;
+    font-weight: bold;
+    letter-spacing: 3px;
+    text-shadow: 0 0 14px rgba(0,0,0,0.9);
+    margin-bottom: 12px;
+}
+
+#match-end-score{
+    font-size: 24px;
+    color: #e8e8e8;
+    margin-bottom: 10px;
+}
+
+#match-end-countdown{
+    font-size: 18px;
+    color: #c8c8c8;
+}
+/* Robot Heroes font class */
+
+.robot-heroes-font {
+    font-family: "Robot Heroes", Arial, sans-serif;
+}
 /* Hero select screen */
 
 #hero-select-overlay{
@@ -665,7 +897,6 @@ canvas {
 
 #hero-select-overlay h1 {
     font-size: 64px;
-    font-family: "Robot Heroes", Arial, sans-serif;
     margin: 0 0 20px 0;
     color: #ff4500;
     text-shadow: 0 0 20px #ff0000, 0 0 40px #ff0000, 4px 4px 8px rgba(0, 0, 0, 0.9);

@@ -572,18 +572,6 @@ export default class HUD {
     _createDebugOverlay() {
         const overlay = document.createElement('div');
         overlay.id = 'debug-overlay';
-        overlay.style.cssText = `
-            position: fixed;
-            bottom: 10px;
-            left: 10px;
-            color: #0f0;
-            font-family: monospace;
-            font-size: 12px;
-            line-height: 1.2em;
-            white-space: pre-line;
-            z-index: 1000;
-            pointer-events: none;
-        `;
         overlay.textContent = 'DEBUG INFO';
         this._mount('debug-overlay', overlay);
         this._els.set('debug-overlay', overlay);
@@ -592,31 +580,14 @@ export default class HUD {
     _createTopBar() {
         const bar = document.createElement('div');
         bar.id = 'top-bar';
-        bar.style.cssText = `
-            position: fixed;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0,0,0,0.5);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 999;
-            pointer-events: none;
-        `;
+
         const redScore = document.createElement('div');
         redScore.id = 'topbar-red-score';
-        redScore.style.cssText = `
-            color: #ff5b5b;
-            font-family: 'Robot Heroes', Arial, sans-serif;
-            font-size: 24px;
-            font-weight: bold;
-            text-shadow: 2px 2px 6px black;
-            z-index: 1000;
-            pointer-events: none;
-            padding: 10px 10px;
-            margin-right: 20px;
-        `;
+        redScore.classList.add("score-text");
+        redScore.classList.add("robot-heroes-font");
+        redScore.style.color = "#ff5555";
+        redScore.style.marginRight = "20px";
+
         redScore.textContent = '0';
 
         bar.appendChild(redScore);
@@ -624,32 +595,19 @@ export default class HUD {
       
         const timer = document.createElement('div');
         timer.id = 'match-timer';
-        timer.style.cssText = `
-            color: #fff;
-            font-family: 'Robot Heroes', Arial, sans-serif;
-            font-size: 18px;
-            font-weight: bold;
-            text-shadow: 2px 2px 6px black;
-            z-index: 1000;
-            pointer-events: none;
-        `;
+        timer.classList.add("robot-heroes-font");
+
         timer.textContent = '00:00';
         bar.appendChild(timer);
         bar.appendChild(document.createElement('div')); // spacer for centering
 
         const blueScore = document.createElement('div');
         blueScore.id = 'topbar-blue-score';
-        blueScore.style.cssText = `
-            color: #56a0ff;
-            font-family: 'Robot Heroes', Arial, sans-serif;
-            font-size: 24px;
-            font-weight: bold;
-            text-shadow: 2px 2px 6px black;
-            z-index: 1000;
-            pointer-events: none;
-            padding: 10px 10px;
-            margin-left: 20px;
-        `;
+        blueScore.classList.add("score-text");
+        blueScore.classList.add("robot-heroes-font");
+        blueScore.style.color = "#56a0ff";
+        blueScore.style.marginLeft = "20px"; 
+
         blueScore.textContent = '0';
         bar.appendChild(blueScore);
         this._mount('top-bar', bar);
@@ -661,16 +619,11 @@ export default class HUD {
 
         const fill = document.createElement('div');
         fill.id = 'health-fill';
-        fill.style.cssText = `
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, #00cc00, #00ff00);
-            transition: width 0.3s, background 0.3s;
-        `;
+
         bar.appendChild(fill);
 
         const text = document.createElement('div');
-        text.id = 'health-text';
+        text.classList.add("health-bar-text");
 
         text.textContent = '100 HP';
         bar.appendChild(text);
@@ -685,21 +638,10 @@ export default class HUD {
         bar.id = 'shield-bar';
 
         const fill = document.createElement('div');
-        fill.style.cssText = `
-            width: 0%;
-            height: 100%;
-            background: linear-gradient(90deg, #0055cc, #55aaff);
-            transition: width 0.25s;
-        `;
+        fill.id = 'shield-fill';
         bar.appendChild(fill);
         const text = document.createElement('div');
-        text.style.cssText = `
-            position:absolute; top:50%; left:50%;
-            transform:translate(-50%,-50%);
-            color:#cce8ff; font-family:Arial,sans-serif;
-            font-weight:bold; font-size:11px;
-            text-shadow:1px 1px 3px black;
-        `;
+        text.classList.add("health-bar-text")
         text.textContent = '0 SH';
         bar.appendChild(text);
         this._mount('shield-bar', bar);
@@ -712,21 +654,11 @@ export default class HUD {
         bar.id = 'armor-bar';
 
         const fill = document.createElement('div');
-        fill.style.cssText = `
-            width: 0%;
-            height: 100%;
-            background: linear-gradient(90deg, #996600, #ffcc00);
-            transition: width 0.25s;
-        `;
+        fill.id = 'armor-fill';
+
         bar.appendChild(fill);
         const text = document.createElement('div');
-        text.style.cssText = `
-            position:absolute; top:50%; left:50%;
-            transform:translate(-50%,-50%);
-            color:#fff4cc; font-family:Arial,sans-serif;
-            font-weight:bold; font-size:11px;
-            text-shadow:1px 1px 3px black;
-        `;
+        text.classList.add("health-bar-text")
         text.textContent = '0 AR';
         bar.appendChild(text);
         this._mount('armor-bar', bar);
@@ -778,62 +710,20 @@ export default class HUD {
     _createKillMessage() {
         const el = document.createElement('div');
         el.id = 'kill-message';
-        el.style.cssText = `
-            position: fixed;
-            text-align: center;
-            top: 40%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-family: "Robot Heroes", Arial, sans-serif;
-            font-size: 36px;
-            font-weight: bold;
-            color: #ff4500;
-            text-shadow: 4px 4px 8px black;
-            opacity: 0;
-            transition: opacity 0.3s;
-            pointer-events: none;
-            z-index: 1000;
-        `;
+        el.classList.add("robot-heroes-font");
         this._mount('kill-message', el);
     }
 
     _createKillFeed() {
         const el = document.createElement('div');
         el.id = 'kill-feed';
-        el.style.cssText = `
-            position: fixed;
-            top: 10px;
-            right: 10px;
-            width: 300px;
-            max-height: 200px;
-            overflow: hidden;
-            font-family: Arial, sans-serif;
-            font-size: 14px;
-            color: white;
-            text-shadow: 2px 2px 4px black;
-            z-index: 900;
-        `;
         this._mount('kill-feed', el);
     }
 
     _createKillStreak() {
         const el = document.createElement('div');
         el.id = 'kill-streak';
-        el.style.cssText = `
-            position: fixed;
-            top: 30%;
-            left: 50%;
-            text-align: center;
-            transform: translate(-50%, -30%);
-            font-family: "Robot Heroes", Arial, sans-serif;
-            font-size: 48px;
-            font-weight: bold;
-            color: #ffff00;
-            text-shadow: 4px 4px 8px black;
-            opacity: 0;
-            pointer-events: none;
-            z-index: 1000;
-        `;
+        el.classList.add("robot-heroes-font");
         this._mount('kill-streak', el);
     }
 
@@ -875,37 +765,18 @@ export default class HUD {
     _createMatchEndOverlay() {
         const overlay = document.createElement('div');
         overlay.id = 'match-end-overlay';
-        overlay.style.cssText = `
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.7);
-            z-index: 2600;
-            pointer-events: none;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            font-family: Arial, sans-serif;
-            color: #fff;
-        `;
 
         const title = document.createElement('div');
         title.id = 'match-end-title';
-        title.style.cssText = 'font-size:52px;font-family: "Robot Heroes", Arial, sans-serif;font-weight:bold;letter-spacing:3px;text-shadow:0 0 14px rgba(0,0,0,0.9);margin-bottom:12px;';
+        title.classList.add("robot-heroes-font");
         title.textContent = 'MATCH ENDED';
 
         const score = document.createElement('div');
         score.id = 'match-end-score';
-        score.style.cssText = 'font-size:24px;color:#e8e8e8;margin-bottom:10px;';
         score.textContent = 'Final: Red 0 - 0 Blue';
 
         const countdown = document.createElement('div');
         countdown.id = 'match-end-countdown';
-        countdown.style.cssText = 'font-size:18px;color:#c8c8c8;';
         countdown.textContent = 'Restarting...';
 
         overlay.appendChild(title);
@@ -920,19 +791,6 @@ export default class HUD {
     _createCrosshair() {
         const el = document.createElement('div');
         el.id = 'crosshair';
-        el.style.cssText = `
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 4px;
-            height: 4px;
-            background: white;
-            border: 1px solid black;
-            border-radius: 50%;
-            pointer-events: none;
-            z-index: 1000;
-        `;
         this._mount('crosshair', el);
     }
 
@@ -954,38 +812,17 @@ export default class HUD {
 
         const title = document.createElement('div');
         title.id = 'respawn-title';
-        title.style.cssText = `
-            font-family: "Robot Heroes", Arial, sans-serif;
-            font-size: 52px;
-            font-weight: bold;
-            color: #ff4444;
-            text-shadow: 0 0 20px rgba(255,0,0,0.8), 4px 4px 8px black;
-            letter-spacing: 6px;
-            margin-bottom: 20px;
-        `;
+        title.classList.add("robot-heroes-font");
         this._els.set('respawn-title', title);
         title.textContent = 'KILLED';
 
         const subtext = document.createElement('div');
-        subtext.style.cssText = `
-            font-family: Arial, sans-serif;
-            font-size: 20px;
-            color: rgba(255,255,255,0.7);
-            letter-spacing: 2px;
-            margin-bottom: 10px;
-        `;
+        subtext.id = "respawn-subtext"
         subtext.textContent = 'RESPAWNING IN';
 
         const countdown = document.createElement('div');
         countdown.id = 'respawn-countdown';
-        countdown.style.cssText = `
-            font-family: Arial, sans-serif;
-            font-size: 80px;
-            font-weight: bold;
-            color: white;
-            text-shadow: 4px 4px 12px black;
-            line-height: 1;
-        `;
+        countdown.classList.add("robot-heroes-font");
         countdown.textContent = '3';
 
         overlay.appendChild(title);
@@ -1020,47 +857,17 @@ export default class HUD {
         }
         const bar = document.createElement('div');
         bar.id = 'self-effect-bar';
-        bar.style.cssText = `
-            position: fixed;
-            top: 80px;
-            left: 50%;
-            transform: translateX(-50%);
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-            justify-content: center;
-            z-index: 990;
-            pointer-events: none;
-        `;
+
         this._mount('self-effect-bar', bar);
     }
 
     _createScreenTintOverlay() {
         const el = document.createElement('div');
         el.id = 'screen-tint';
-        el.style.cssText = `
-            display: none;
-            position: fixed;
-            inset: 0;
-            pointer-events: none;
-            z-index: 880;
-        `;
+
         const lbl = document.createElement('div');
         lbl.className = 'screen-tint-label';
-        lbl.style.cssText = `
-            position: absolute;
-            top: 20%;
-            left: 50%;
-            transform: translateX(-50%);
-            font-family: 'Segoe UI', Arial, sans-serif;
-            font-size: 22px;
-            font-weight: bold;
-            letter-spacing: 3px;
-            text-transform: uppercase;
-            color: rgba(255,255,255,0.8);
-            text-shadow: 0 0 14px currentColor;
-            pointer-events: none;
-        `;
+
         el.appendChild(lbl);
         this._mount('screen-tint', el);
     }

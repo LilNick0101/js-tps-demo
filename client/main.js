@@ -967,7 +967,7 @@ function setupNetworkHandlers() {
             }
         }
         if (isLocalPlayer(data.targetId)) {
-            hud.showSelfEffect('healingRite', `✚ Healing Rite`, '#18d049');
+            hud.showSelfEffect('healingRite', `✚ Healing Boon`, '#18d049');
             //setTimeout(() => hud.hideSelfEffect('healingRite'), 900);
         }
     });
@@ -1020,7 +1020,7 @@ function setupNetworkHandlers() {
             audioManager.playHeroAbilityLine(6, 'ability2', mesh);
         }
         if (isLocalPlayer(data.id)) {
-            hud.showSelfEffect('majesticLeap', '↟ Majestic Leap', '#63d1ff');
+            hud.showSelfEffect('majesticLeap', '↟ Engaging Leap', '#63d1ff');
         }
     });
 
@@ -1039,8 +1039,8 @@ function setupNetworkHandlers() {
             audioManager.playHeroAbilityLine(6, 'ultimate', mesh);
         }
         if (isLocalPlayer(data.id)) {
-            hud.showSelfEffect('heroicAura', '✦ Heroic Aura Active', '#81dbff');
-            hud.showScreenTint('heroicAura', 'rgba(70, 150, 255, 0.08)', '#81dbff', 'HEROIC AURA');
+            hud.showSelfEffect('heroicAura', '✦ Inspiring Aura Active', '#81dbff');
+            hud.showScreenTint('heroicAura', 'rgba(70, 150, 255, 0.08)', '#81dbff', 'INSPIRING AURA');
         }
     });
 

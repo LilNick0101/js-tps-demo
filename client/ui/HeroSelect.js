@@ -17,9 +17,9 @@ const HERO_DATA = [
         color: '#888',
         desc: 'A blank canvas for testing. No special abilities.',
         abilities: [
-            { key: 'Q', name: '—', desc: 'No ability' },
-            { key: 'E', name: '—', desc: 'No ability' },
-            { key: 'Z', name: '—', desc: 'No ability' },
+            { key: '1', name: '—', desc: 'No ability' },
+            { key: '2', name: '—', desc: 'No ability' },
+            { key: '3', name: '—', desc: 'No ability' },
         ],
     },
     {
@@ -29,9 +29,9 @@ const HERO_DATA = [
         color: '#9933ff',
         desc: 'Shadow alien wizard and a close quarters menace!',
         abilities: [
-            { key: 'Q', name: 'Shadow Lightning', desc: 'Call down 3 lightning strikes in a line ahead of you.' },
-            { key: 'E', name: 'Shadow Teleport', desc: 'Dash 5 m forward instantly.' },
-            { key: 'Z', name: 'Shadow Storm', desc: 'Summon a lasting AOE storm that damages all nearby enemies.' },
+            { key: '1', name: 'Shadow Lightning', desc: 'Call down 3 lightning strikes in a line ahead of you.' },
+            { key: '2', name: 'Shadow Teleport', desc: 'Dash forward instantly.' },
+            { key: '3', name: 'Shadow Storm', desc: 'Summon a lasting AOE storm that damages all nearby enemies around you.' },
         ],
     },
     {
@@ -42,7 +42,7 @@ const HERO_DATA = [
         desc: 'Vigilante bruiser who uses high-impact gadgets to control the battlefield.',
         abilities: [
             { key: '1', name: 'Shock Grenade', desc: 'Throw a grenade that explodes and slows all caught in the blast.' },
-            { key: '2', name: 'Willpower', desc: 'Activate a personal energy shield that absorbs incoming damage lasting 5 s.' },
+            { key: '2', name: 'Willpower', desc: 'Activate a personal energy shield that absorbs incoming damage.' },
             { key: '3', name: 'Cluster Strike', desc: 'Call in a cluster-bomb barrage that blankets a wide area.' },
         ],
     },
@@ -51,11 +51,11 @@ const HERO_DATA = [
         name: 'Father Callas',
         role: 'Tank · Pump Shotgun',
         color: '#c471ed',
-        desc: '"Naive men pray to the gods, they will learn to pray to me." — An evil tank priest who steals life, shrugs off punishment, and exiles enemies to another dimension.',
+        desc: 'An evil tank priest who steals life, shrugs off punishment, and exiles enemies to another dimension.',
         abilities: [
-            { key: '1', name: 'Siphon Life', desc: 'Channel for 6 seconds, continuously draining all enemies in an 80° cone ahead and healing yourself for 30% of damage dealt.' },
-            { key: '2', name: 'Iron Stand', desc: 'Become invulnerable and frozen for a brief moment. Afterwards, 20% of all incoming damage converts to shield for 10 s.' },
-            { key: '3', name: 'Shadow Realm Banish', desc: 'Exile the nearest enemy for 6 s — immune but unable to act. They take damage on return.' },
+            { key: '1', name: 'Siphon Life', desc: 'Channel for a brief period, continuously draining all enemies in an cone ahead and healing yourself for a portion of damage dealt.' },
+            { key: '2', name: 'Iron Stand', desc: 'Become invulnerable and frozen for a brief moment. Afterwards, a portion of all incoming damage converts to shield.' },
+            { key: '3', name: 'Shadow Realm Banish', desc: 'Exile the nearest enemy for — immune but unable to act. They will take damage on return.' },
         ],
     },
     {
@@ -65,9 +65,9 @@ const HERO_DATA = [
         color: '#a8e6cf',
         desc: 'Moon-girl assassin. Higher base movement speed but lower health. Dashes through enemies, flies above the fray, and silences entire squads with a lunar blast.',
         abilities: [
-            { key: '1', name: 'Crystal Smash', desc: 'Dash forward and collide with an enemy, dealing damage and stunning them for 1 s. A kill drops a crystal shard that restores 20 HP.' },
-            { key: '2', name: 'Astral Elevation', desc: 'Launch into the air and become untargetable for 3 s, flying. After landing, gain +50 % weapon damage for 3 s.' },
-            { key: '3', name: 'Lunar Eclipse', desc: 'Leap skyward, then detonate 3 lunar blasts, each dealing 60 damage and 4 s silence to all enemies in a large radius.' },
+            { key: '1', name: 'Crystal Smash', desc: 'Dash forward and collide with an enemy, dealing damage and stunning them. A kill drops a crystal shard that restores health.' },
+            { key: '2', name: 'Astral Elevation', desc: 'Launch into the air and become untargetable for a brief moment, flying. After landing, gain a weapon damage boost for a moment.' },
+            { key: '3', name: 'Lunar Eclipse', desc: 'Leap skyward, then detonate 3 lunar blasts, each dealing burst damage and silencing all enemies in a large radius.' },
         ],
     },
     {
@@ -77,9 +77,9 @@ const HERO_DATA = [
         color: '#39901a',
         desc: 'A stinky and greedy comic relief villain with a big belly and a love for garbage food and money.',
         abilities: [
-            { key: '1', name: 'Shoulder Charge', desc: 'Charge forward for 1.5 s, knocking back and damaging enemies in your path. Can steer left and right while charging.' },
+            { key: '1', name: 'Shoulder Charge', desc: 'Charge forward, grabbing and damaging enemies in your path. Can steer left and right while charging.' },
             { key: '2', name: 'Butt Smash', desc: 'Jump into the air and slam down, dealing damage in a small area. Enemies right next to you take more damage and are stunned briefly.' },
-            { key: '3', name: 'Fatal Flatulence', desc: 'Start farting every second releasing a lingering fart cloud that deals non-lethal damage and slows enemies. Lasts 10 seconds.' },
+            { key: '3', name: 'Fatal Flatulence', desc: 'Start farting every second releasing a lingering fart cloud that deals non-lethal damage and slows enemies.' },
         ],
     },
     {
@@ -89,9 +89,9 @@ const HERO_DATA = [
         color: '#63d1ff',
         desc: 'Backline sniper support that keeps allies alive and enables team ult tempo.',
         abilities: [
-            { key: '1', name: 'Arrow of Gratitude', desc: 'Heal the closest ally in front of you for 20% max HP. Hold middle mouse to self-cast.' },
-            { key: '2', name: 'Majestic Leap', desc: 'Perform a huge directional leap upward at high speed.' },
-            { key: '3', name: 'Heroic Aura', desc: 'For 10 s, every second grant armor and reduce ultimate cooldown for yourself and nearby allies.' },
+            { key: '1', name: 'Arrow of Gratitude', desc: 'Heal the closest ally in front of you with a burst of healing. Hold middle mouse to self-cast.' },
+            { key: '2', name: 'Engaging Leap', desc: 'Perform a huge directional leap upward at high speed.' },
+            { key: '3', name: 'Inspiring Aura', desc: 'For a brief period of time, every second grant armor and reduce ultimate cooldown for yourself and nearby allies.' },
         ],
     },
     {
@@ -101,9 +101,9 @@ const HERO_DATA = [
         color: '#18d049',
         desc: 'Holy knight support who can heal allies and punish enemies with a powerful hammer of justice. A versatile pick for players who like to adapt to their team\'s needs.',
         abilities: [
-            { key: '1', name: 'Holy Water', desc: 'Throw a flask of holy water that shatters on impact, healing allies and damaging enemies in an area.' },
-            { key: '2', name: 'Healing Rite', desc: 'Channel for 6 seconds, continuously healing all allies in an 80° cone ahead and restoring 30% of damage dealt to yourself.' },
-            { key: '3', name: 'Hammer of Justice', desc: 'Strike a hammer on the ground, creating a shockwave that damages enemies and stuns them for 3 seconds.' },
+            { key: '1', name: 'Holy Water', desc: 'Throw flasks of holy water that shatters on impact, healing allies in an area.' },
+            { key: '2', name: 'Healing Boon', desc: 'Cast a boon to an ally (or yourself by holding middle mouse), healing every second for a time period. Stops when damaged' },
+            { key: '3', name: 'Hammer of Justice', desc: 'Strike a hammer on the ground, creating a shockwave that damages enemies and stuns them for a brief period of time.' },
         ]
     }
 ];
@@ -126,6 +126,7 @@ class HeroSelect {
 
         const title = document.createElement('h1');
         title.textContent = 'Choose Your Hero';
+        title.classList.add("robot-heroes-font");
         overlay.appendChild(title);
 
         const row = document.createElement('div');
@@ -148,7 +149,7 @@ class HeroSelect {
     _showTooltip(hero, x, y) {
         const tooltip = this._tooltip;
         tooltip.innerHTML = `
-            <div style="font-size:1.5rem; font-weight:700; color:${hero.color}; margin-bottom:4px; font-family: 'Robot Heroes', Arial, sans-serif;">${hero.name}</div>
+            <div style="font-size:1.5rem; font-weight:700; color:${hero.color}; margin-bottom:4px;" class="robot-heroes-font">${hero.name}</div>
             <div style="font-size:0.78rem; color:#aaa; margin-bottom:12px;">${hero.role}</div>
             <div style="font-size:0.85rem; margin-bottom:16px; line-height:1.4;">${hero.desc}</div>
             ${hero.abilities.map(a => `
@@ -204,7 +205,7 @@ class HeroSelect {
         });
 
         card.innerHTML = `
-            <div style="font-size:1.5rem; font-weight:700; color:${hero.color}; margin-bottom:4px; font-family: 'Robot Heroes', Arial, sans-serif;">${hero.name}</div>
+            <div style="font-size:1.5rem; font-weight:700; color:${hero.color}; margin-bottom:4px;" class="robot-heroes-font">${hero.name}</div>
             <div style="font-size:0.78rem; color:#aaa; margin-bottom:12px;">${hero.role}</div>
             <div style="font-size:0.85rem; margin-bottom:16px; line-height:1.4;">${hero.desc}</div>
         `;

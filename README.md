@@ -36,8 +36,8 @@ npm start
 npx vite
 ```
 By default, the server will run on `http://localhost:10000` and the client on `http://localhost:5173`. Open the client URL in your browser to start playing.
-The following enviromnent variables can be set if needed:
-- `VITE_SERVER_URL`: The URL the client will try to connect to(default is http://localhost).
+The following environment variables can be set if needed:
+- `VITE_SERVER_URL`: The URL the client will try to connect to (default is http://localhost).
 - `VITE_SERVER_PORT`: The port the client will try to connect to (default is 10000).
 - `SERVER_PORT`: The port the server will listen to (default is 10000).
 

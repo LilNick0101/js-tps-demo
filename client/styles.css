@@ -799,7 +799,7 @@ canvas {
     z-index: 880;
 }
 
-#screen-tint-label{
+.screen-tint-label{
     position: absolute;
     top: 20%;
     left: 50%;

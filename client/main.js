@@ -1311,7 +1311,7 @@ function startGame() {
     // Connect to server
     channel = geckos({ 
         url: import.meta.env.VITE_SERVER_URL ? import.meta.env.VITE_SERVER_URL : "http://localhost", // Auto-use same host in production
-        port: import.meta.env.VITE_SERVER_PORT ? parseInt(import.meta.env.VITE_SERVER_PORT) : 1337,
+        port: import.meta.env.VITE_SERVER_PORT ? parseInt(import.meta.env.VITE_SERVER_PORT) : 3200,
     });
 
     heroSelect = new HeroSelect(document.body);

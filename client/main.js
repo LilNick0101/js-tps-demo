@@ -1064,188 +1064,196 @@ function setupNetworkHandlers() {
         }
     });
 
-    channel.onRaw((rawMsg) => {
-        const now = performance.now();
-        const rawDt = (now - lastTickTime) / 1000;
-        // Clamp delta time to avoid spiral-of-death on tab re-focus / very long frames
-        const dt = Math.max(0.001, Math.min(rawDt, 1 / 20));
-        lastTickTime = now;
+    channel.on('update', (msg) => {
 
-        const decoded = Codec.decode(rawMsg);
-        if (!decoded || typeof decoded !== 'object') {
+        const {state, match} = msg;
+        if (!state || !match) {
             return;
         }
-
-        const players = (decoded.players && typeof decoded.players === 'object') ? decoded.players : {};
-        const bots = (decoded.bots && typeof decoded.bots === 'object') ? decoded.bots : {};
-        const bullets = Array.isArray(decoded.bullets) ? decoded.bullets : [];
-        const pickups = Array.isArray(decoded.pickups) ? decoded.pickups : [];
-        const match = (decoded.match && typeof decoded.match === 'object') ? decoded.match : null;
+        //console.log(state)
+        interpolationSystem.addSnapshot(state)
 
         // console.log(bullets)
 
-        renderSystem.setFrameTime(now);
         if (match) {
             currentMatchState = { ...currentMatchState, ...match };
             hud.updateMatchState(currentMatchState);
         }
         // 1. Update Players
-        for (const id in players) {
-            const playerData = players[id];
-            if (!playerData || typeof playerData !== 'object') continue;
-            
-            // Create mesh if it doesn't exist
-            if (!renderSystem.hasMesh(id)) {
-                renderSystem.createPlayerMesh(id, playerData.eid, playerData.color, playerData.team == teamOfEntity(myId));
-            }
-            
-            // Update mesh position and rotation
-            if (id === myId) {
-                // ── Local player: client-side prediction ────────────────────────
-                // Seed the predictor on first appearance in the state stream
-                hud.updateDebugInfo(playerData,currentPing)
-                if (!predictionInitialized) {
-                    predictionSystem.initialize(playerData.x, playerData.y, playerData.z);
-                    predictionInitialized = true;
-                }
-                // Reconcile: if predicted pos diverges > 5 cm from server, rewind
-                predictionSystem.reconcile(playerData, inputBuffer);
-                // Render at the predicted (lag-free) position
-                const pred = predictionSystem.getPosition();
-                renderSystem.updatePlayerMesh(id, { ...playerData, ...pred }, true);
+    });
+}
 
-                myHealth    = playerData.health;
-                myMaxHealth = playerData.healthMax ?? myMaxHealth;
-                myMaxArmor  = playerData.armorMax ?? myMaxArmor;
-                hud.updateHealth(myHealth, myMaxHealth);
-                if (playerData.armor  !== undefined) hud.updateArmor(playerData.armor,playerData.armorMax);
-                if (playerData.shield !== undefined) hud.updateShield(playerData.shield);
-                if (playerData.ammo   !== undefined) hud.updateAmmo(playerData.ammo);
-                const myHeroClass = playerData.heroClass ?? 0;
-                const maxCds = HERO_CD_MAXES[myHeroClass] ?? HERO_CD_MAXES[0];
-                hud.updateAbilityCooldowns(playerData, maxCds);
-            } else {
-                // ── Remote players: snapshot interpolation (render 100 ms behind) ──
-                interpolationSystem.addSnapshot(id, playerData);
-                const interp = interpolationSystem.getInterpolated(id);
-                renderSystem.updatePlayerMesh(id, interp ?? playerData, true);
-            }
+function update(){
+    if(!channel) return;
+    const now = performance.now();
+    const rawDt = (now - lastTickTime) / 1000;
+    // Clamp delta time to avoid spiral-of-death on tab re-focus / very long frames
+    const dt = Math.max(0.001, Math.min(rawDt, 1 / 20));
+    lastTickTime = now;
+    renderSystem.setFrameTime(now);
+    const snapshots = interpolationSystem.calculateSnapshot();
+    if(!snapshots) return;
 
-            // Update score + hero class cache
-            heroClassCache.set(id, { hero: playerData.heroClass ?? 0,weapon: playerData.weaponId ?? 0 });
-            playerScores[id] = {
-                id: id,
-                name: playerData.name || id,
-                hero: playerData.heroClass ?? 0,
-                team: playerData.team ?? 0,
-                kills: playerData.kills || 0,
-                deaths: playerData.deaths || 0,
-            };
-        }
+    //console.log(snapshots.players)
 
-        // 2. Update Bots
-        for (const id in bots) {
-            const botData = bots[id];
-            if (!botData || typeof botData !== 'object') continue;
-            
-            // Create mesh if it doesn't exist
-            if (!renderSystem.hasMesh(id)) {
-                renderSystem.createPlayerMesh(id, botData.eid, botData.color, botData.team == teamOfEntity(myId));
-            }
+    const players = snapshots.players.state;
+    const bots = snapshots.bots.state;
+    const bullets = snapshots.bullets.state;
+    const pickups = snapshots.pickups.state;
 
-            // Update score + hero class cache
-            heroClassCache.set(id, { hero: botData.heroClass ?? 0, weapon: botData.weaponId ?? 0 });
-            playerScores[id] = {
-                id: id,
-                name: botData.name || id,
-                hero: botData.heroClass ?? 0,
-                team: botData.team ?? 0,
-                kills: botData.kills || 0,
-                deaths: botData.deaths || 0,
-            };
-            
-            // Remote bots: snapshot interpolation (render 100 ms behind)
-            interpolationSystem.addSnapshot(id, botData);
-            const botInterp = interpolationSystem.getInterpolated(id);
-            renderSystem.updatePlayerMesh(id, botInterp ?? botData, false);
-        }
+    //console.log(bots)
 
-        const serverBulletIds = new Set(bullets.filter((b) => b && typeof b === 'object').map((b) => b.id));
-        const currentBullets = new Set();
+    for (const playerData of players) {
+        const id = playerData.id;
+        if (!playerData) continue;
         
-        // Track which bullets we have
-        renderSystem.entityMeshes.forEach((mesh, key) => {
-            if (typeof key === 'number' && !players[key]) {
-                currentBullets.add(key);
-            }
-        });
+        // Create mesh if it doesn't exist
+        if (!renderSystem.hasMesh(id)) {
+            renderSystem.createPlayerMesh(id, playerData.eid, playerData.color, playerData.team == teamOfEntity(myId));
+        }
         
-        for (const bid of currentBullets) {
-            if (!serverBulletIds.has(bid)) {
-                renderSystem.removeMesh(bid);
+        // Update mesh position and rotation
+        if (id === myId) {
+            // ── Local player: client-side prediction ────────────────────────
+            // Seed the predictor on first appearance in the state stream
+            hud.updateDebugInfo(playerData,currentPing)
+            if (!predictionInitialized) {
+                predictionSystem.initialize(playerData.x, playerData.y, playerData.z);
+                predictionInitialized = true;
             }
+            // Reconcile: if predicted pos diverges > 5 cm from server, rewind
+            //predictionSystem.reconcile(playerData, inputBuffer);
+            // Render at the predicted (lag-free) position
+            const pred = {x: playerData.x, y: playerData.y, z: playerData.z}
+            renderSystem.updatePlayerMesh(id, { ...playerData, ...pred }, true);
+
+            myHealth    = playerData.health;
+            myMaxHealth = playerData.healthMax ?? myMaxHealth;
+            myMaxArmor  = playerData.armorMax ?? myMaxArmor;
+            hud.updateHealth(myHealth, myMaxHealth);
+            if (playerData.armor  !== undefined) hud.updateArmor(playerData.armor,playerData.armorMax);
+            if (playerData.shield !== undefined) hud.updateShield(playerData.shield);
+            if (playerData.ammo   !== undefined) hud.updateAmmo(playerData.ammo);
+            const myHeroClass = playerData.heroClass ?? 0;
+            const maxCds = HERO_CD_MAXES[myHeroClass] ?? HERO_CD_MAXES[0];
+            hud.updateAbilityCooldowns(playerData, maxCds);
+        } else {
+            // ── Remote players: snapshot interpolation (render 100 ms behind) ──
+            renderSystem.updatePlayerMesh(id, playerData, true);
         }
 
-        bullets.forEach(b => {
-            if (!b || typeof b !== 'object' || b.id == null) return;
-            if (!renderSystem.hasMesh(b.id)) {
-                renderSystem.createBulletMesh(b.id,b.type);
-            }
-            renderSystem.updateBulletMesh(b.id, b);
-        });
-
-        // 4. Sync pickup meshes
-        if (pickups.length) {
-            for (const pu of pickups) {
-                if (!pu || typeof pu !== 'object' || pu.id == null) continue;
-                if (!renderSystem.hasPickupMesh(pu.id)) {
-                    renderSystem.createPickupMesh(pu.id, pu.type);
-                }
-                renderSystem.updatePickupMesh(pu.id, pu);
-            }
-        }
-
-        // 3. Update Camera (Over-the-Shoulder)
-        cameraSystem.attachMesh(myId);
-        cameraSystem.update(yaw,pitch,dt);
-        
-        // Update mini scoreboard every tick
-        hud.updateScoreboard(playerScores, myId, currentMatchState);
-        // ── Build & send input packet ────────────────────────────────────────────
-        const validatedInputs = validatePlayerInput(inputs);
-        const validatedPitch = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, cameraSystem.aimPitch));
-
-        inputSeq++;
-        const inputPacket = {
-            seq:    inputSeq,
-            inputs: { ...validatedInputs },
-            yaw: cameraSystem.aimYaw,
-            pitch: validatedPitch,
-            dt,
+        // Update score + hero class cache
+        heroClassCache.set(id, { hero: playerData.heroClass ?? 0,weapon: playerData.weaponId ?? 0 });
+        playerScores[id] = {
+            id: id,
+            name: playerData.name || id,
+            hero: playerData.heroClass ?? 0,
+            team: playerData.team ?? 0,
+            kills: playerData.kills || 0,
+            deaths: playerData.deaths || 0,
         };
+    }
 
-        // Store in rolling buffer so reconciliation can replay unacknowledged inputs
-        inputBuffer.push({ ...inputPacket, timestamp: now });
+    // 2. Update Bots
+    for (const botData of bots) {
+        if (!botData) continue;
+        const id = botData.id;
 
-        // Prune acknowledged / expired inputs (older than 1 second)
-        const cutoff = now - 1000;
-        while (inputBuffer.length > 0 && inputBuffer[0].timestamp < cutoff) {
-            inputBuffer.shift();
+        // Create mesh if it doesn't exist
+        if (!renderSystem.hasMesh(id)) {
+            renderSystem.createPlayerMesh(id, botData.eid, botData.color, botData.team == teamOfEntity(myId));
         }
 
-        // Apply prediction locally – instant response before the server round-trip
-        if (predictionInitialized) {
-            predictionSystem.applyInput(inputPacket, dt);
-        }
+        // Update score + hero class cache
+        heroClassCache.set(id, { hero: botData.heroClass ?? 0, weapon: botData.weaponId ?? 0 });
+        playerScores[id] = {
+            id: id,
+            name: botData.name || id,
+            hero: botData.heroClass ?? 0,
+            team: botData.team ?? 0,
+            kills: botData.kills || 0,
+            deaths: botData.deaths || 0,
+        };
+        
+        // Remote bots: snapshot interpolation (render 100 ms behind)
+        renderSystem.updatePlayerMesh(id, botData, false);
+    }
 
-        // Send inputs to server.
-        // Flow-control: enforce a 120 Hz ceiling so a tab un-focus / catch-up
-        // burst cannot flood the server with stale inputs.
-        if (now - lastInputSendTime >= INPUT_SEND_INTERVAL) {
-            lastInputSendTime = now;
-            channel.raw.emit(Codec.encode(inputPacket));
+    const serverBulletIds = new Set(bullets.filter((b) => b && typeof b === 'object').map((b) => b.id));
+    const currentBullets = new Set();
+    
+    // Track which bullets we have
+    renderSystem.entityMeshes.forEach((mesh, key) => {
+        if (typeof key === 'number' && !players[key]) {
+            currentBullets.add(key);
         }
     });
+    
+    for (const bid of currentBullets) {
+        if (!serverBulletIds.has(bid)) {
+            renderSystem.removeMesh(bid);
+        }
+    }
+
+    bullets.forEach(b => {
+        if (!b || typeof b !== 'object' || b.id == null) return;
+        if (!renderSystem.hasMesh(b.id)) {
+            renderSystem.createBulletMesh(b.id,b.type);
+        }
+        renderSystem.updateBulletMesh(b.id, b);
+    });
+
+    // 4. Sync pickup meshes
+    if (pickups.length) {
+        for (const pu of pickups) {
+            if (!pu || typeof pu !== 'object' || pu.id == null) continue;
+            if (!renderSystem.hasPickupMesh(pu.id)) {
+                renderSystem.createPickupMesh(pu.id, pu.type);
+            }
+            renderSystem.updatePickupMesh(pu.id, pu);
+        }
+    }
+
+    // 3. Update Camera (Over-the-Shoulder)
+    cameraSystem.attachMesh(myId);
+    cameraSystem.update(yaw,pitch,dt);
+    
+    // Update mini scoreboard every tick
+    hud.updateScoreboard(playerScores, myId, currentMatchState);
+    // ── Build & send input packet ────────────────────────────────────────────
+    const validatedInputs = validatePlayerInput(inputs);
+    const validatedPitch = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, cameraSystem.aimPitch));
+
+    inputSeq++;
+    const inputPacket = {
+        seq:    inputSeq,
+        inputs: { ...validatedInputs },
+        yaw: cameraSystem.aimYaw,
+        pitch: validatedPitch,
+        dt,
+    };
+
+    // Store in rolling buffer so reconciliation can replay unacknowledged inputs
+    inputBuffer.push({ ...inputPacket, timestamp: now });
+
+    // Prune acknowledged / expired inputs (older than 1 second)
+    const cutoff = now - 1000;
+    while (inputBuffer.length > 0 && inputBuffer[0].timestamp < cutoff) {
+        inputBuffer.shift();
+    }
+
+    // Apply prediction locally – instant response before the server round-trip
+    if (predictionInitialized) {
+        predictionSystem.applyInput(inputPacket, dt);
+    }
+
+    // Send inputs to server.
+    // Flow-control: enforce a 120 Hz ceiling so a tab un-focus / catch-up
+    // burst cannot flood the server with stale inputs.
+    if (now - lastInputSendTime >= INPUT_SEND_INTERVAL) {
+        lastInputSendTime = now;
+        channel.raw.emit(Codec.encode(inputPacket));
+    }
 }
 
 // --- GAME START ---
@@ -1395,6 +1403,8 @@ window.addEventListener('click', (e) => {
 // --- RENDER ---
 function animate() {
     requestAnimationFrame(animate);
+
+    update();
 
     renderer.render(scene, cameraSystem.camera);
 }

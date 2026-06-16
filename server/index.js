@@ -8,7 +8,6 @@ const DamageSystem = require('./systems/DamageSystem');
 const BotSystem = require('./systems/BotSystem');
 const RespawnSystem = require('./systems/RespawnSystem');
 const World = require('./world/World');
-const StateHistory = require('./world/StateHistory');
 const MovementSystem = require('./systems/MovementSystem');
 const NetworkSystem = require('./systems/NetworkSystem');
 const CombatSystem = require('./systems/CombatSystem');
@@ -18,7 +17,7 @@ const HeroSystem   = require('./systems/HeroSystem');
 const ModifiersSystem  = require('./systems/ModifiersSystem');
 const { decode } = require('../shared/utils/Codec');
 const GameState = require('./GameState');
-const NetworkGameStateFacade = require('./facades/NetworkGameStateFacade');
+const NetworkGameStateEmitter = require('./network/NetworkGameStateEmitter');
 const {
     Rotation,
     Controller,
@@ -72,19 +71,16 @@ botSystem.heroSystem = heroSystem;
 
 combatSystem.heroSystem = heroSystem; // For combat modifiers like Selene’s Lunar Eclipse and Astral Elevation
 // Circular buffer of the last 500 ms of world snapshots
-const stateHistory = new StateHistory(500, TICK_RATE);
 
-// Per-player last-accepted-input timestamp, used for flow control.
-// Max accepted input rate: 90 Hz (well above the 60 TPS tick rate).
 const playerLastInput = new Map();
 const INPUT_RATE_LIMIT_MS = 1000 / 90; // ~11 ms minimum gap between inputs
 
 // Store physics world reference in ecsWorld for respawn
 ecsWorld.physicsWorld = physicsWorld;
 
-const networkGameStateFacade = new NetworkGameStateFacade(io, networkSystem, stateHistory);
+const networkGameStateEmitter = new NetworkGameStateEmitter(io, networkSystem);
 
-const gameState = new GameState(ecsWorld, physicsWorld, networkGameStateFacade, respawnSystem, botSystem, movementSystem, damageSystem, combatSystem, pickupSystem, modifiers, heroSystem);
+const gameState = new GameState(ecsWorld, physicsWorld, networkGameStateEmitter, respawnSystem, botSystem, movementSystem, damageSystem, combatSystem, pickupSystem, modifiers, heroSystem);
 damageSystem.gameState = gameState;
 
 // Initialize physics world and spawn bots

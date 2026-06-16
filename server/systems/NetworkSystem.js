@@ -64,8 +64,8 @@ class NetworkSystem {
      * @returns {Object} Serialized state with players, bots, and bullets
      */
     serializeState(world, match = null) {
-        const players = {};
-        const bots    = {};
+        const players = [];
+        const bots    = [];
         const bullets = [];
         const pickups = [];
 
@@ -79,7 +79,7 @@ class NetworkSystem {
                 const colorB = Math.floor(EntityColor.b[eid] * 255);
                 const color  = (colorR << 16) | (colorG << 8) | colorB;
                 
-                players[socketId] = {
+                players.push({
                     id:               socketId,
                     eid:              eid,
                     x:                Position.x[eid],
@@ -109,7 +109,7 @@ class NetworkSystem {
                     dashTimer:        Dash.dashTimer[eid],
                     dashDuration:     Dash.dashDuration[eid],
                     lastProcessedSeq: this.lastProcessedSeq.get(socketId) ?? 0,
-                };
+                });
             }
         }
 
@@ -123,7 +123,7 @@ class NetworkSystem {
             const colorB = Math.floor(EntityColor.b[eid] * 255);
             const color  = (colorR << 16) | (colorG << 8) | colorB;
             
-            bots[botId] = {
+            bots.push({
                 id:        botId,
                 eid:       eid,
                 x:         Position.x[eid],
@@ -142,7 +142,7 @@ class NetworkSystem {
                 name:      this.ecsWorld.getEntityName(eid),
                 kills:     Score.kills[eid],
                 deaths:    Score.deaths[eid],
-            };
+            });
         }
 
         // Serialize bullets

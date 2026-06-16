@@ -8,6 +8,7 @@
   "dependencies": {
     "@dimforge/rapier3d-compat": "^0.19.3",
     "@geckos.io/server": "^3.0.2",
+    "@geckos.io/snapshot-interpolation": "^1.1.1",
     "bitecs": "^0.3.38",
     "express": "^4.18.2",
     "msgpackr": "^1.11.8",

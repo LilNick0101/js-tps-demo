@@ -21,13 +21,13 @@ const MatchSystem = require('./systems/MatchSystem');
 
 // server/GameState.js
 class GameState {
-    constructor(ecsWorld, physicsWorld, metworkGameStateFacade, respawnSystem, botSystem, movementSystem, damageSystem, combatSystem, pickupSystem, modifiers ,heroSystem) {
+    constructor(ecsWorld, physicsWorld, metworkGameStateEmitter, respawnSystem, botSystem, movementSystem, damageSystem, combatSystem, pickupSystem, modifiers ,heroSystem) {
         /** @type {import('./world/World')} */
         this.ecsWorld = ecsWorld;
         /** @type {import('./world/PhysicsWorld')} */
         this.physicsWorld = physicsWorld;
-        /** @type {import('./facades/NetworkGameStateFacade')} */
-        this.networkGameStateFacade = metworkGameStateFacade;
+        /** @type {import('./facades/NetworkGameStateEmitter')} */
+        this.networkGameStateEmitter = metworkGameStateEmitter;
         /** @type {import('./systems/RespawnSystem')} */
         this.respawnSystem = respawnSystem;
         /** @type {import('./systems/BotSystem')} */
@@ -221,7 +221,7 @@ class GameState {
             this.damageSystem.reset(); // Reset any match-specific state in the damage system (e.g. first blood tracking)
         }
 
-        this.networkGameStateFacade.emitGameState(this.ecsWorld.world, this.matchState);
+        this.networkGameStateEmitter.emitGameState(this.ecsWorld.world, this.matchState);
         
     }
 
@@ -251,7 +251,7 @@ class GameState {
     }
 
     emitMatchEvent(eventName, payload) {
-        this.networkGameStateFacade.emitMatchEvent(eventName, payload);
+        this.networkGameStateEmitter.emitMatchEvent(eventName, payload);
     }
 
     buildMatchEventPayload(eventName) {

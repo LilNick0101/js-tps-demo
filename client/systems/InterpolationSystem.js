@@ -1,4 +1,5 @@
 import MathUtils from '../utils/MathUtils.js';
+import { SnapshotInterpolation } from '@geckos.io/snapshot-interpolation'
 
 /**
  * client/systems/InterpolationSystem.js
@@ -28,6 +29,8 @@ import MathUtils from '../utils/MathUtils.js';
 /** Render remote players this many milliseconds in the past. */
 const INTERPOLATION_DELAY = 100;
 
+const TICK_RATE = 60;
+
 /** Maximum snapshots retained per entity (covers ~333 ms at 60 fps). */
 const MAX_SNAPSHOTS = 24;
 
@@ -37,7 +40,7 @@ class InterpolationSystem {
          * Map<entityId, Array<{timestamp, x, y, z, yaw, pitch}>>
          * Snapshots are stored in arrival order (oldest → newest).
          */
-        this.snapshots = new Map();
+        this.SI = new SnapshotInterpolation(TICK_RATE);
     }
 
     // -------------------------------------------------------------------------
@@ -51,96 +54,30 @@ class InterpolationSystem {
      * @param {string|number} id    - Entity identifier (socketId or botId).
      * @param {{ x, y, z, yaw, pitch }} state
      */
-    addSnapshot(id, state) {
-        if (!this.snapshots.has(id)) {
-            this.snapshots.set(id, []);
-        }
-
-        const buffer = this.snapshots.get(id);
-        buffer.push({
-            timestamp: performance.now(),
-            x:     state.x,
-            y:     state.y,
-            z:     state.z,
-            yaw:   state.yaw,
-            pitch: state.pitch ?? 0,
-        });
-
-        // Discard snapshots that are too old to be useful
-        while (buffer.length > MAX_SNAPSHOTS) {
-            buffer.shift();
-        }
+    addSnapshot(state) {
+        this.SI.snapshot.add(state)
     }
 
     // -------------------------------------------------------------------------
     // Read
     // -------------------------------------------------------------------------
 
-    /**
-     * Return the interpolated state for `id` at the render time
-     * (i.e. `now − INTERPOLATION_DELAY`).
-     *
-     * @param {string|number} id
-     * @returns {{ x, y, z, yaw, pitch }|null}
-     *   Returns `null` if no snapshot data is available yet for this entity.
-     */
-    getInterpolated(id) {
-        const buffer = this.snapshots.get(id);
-        if (!buffer || buffer.length === 0) return null;
-
-        // With only one snapshot, return it directly (no lerp possible)
-        if (buffer.length === 1) return buffer[0];
-
-        const renderTime = performance.now() - INTERPOLATION_DELAY;
-
-        // Find the pair of snapshots that bracket renderTime
-        let older = null;
-        let newer = null;
-
-        for (let i = buffer.length - 1; i >= 0; i--) {
-            if (buffer[i].timestamp <= renderTime) {
-                older = buffer[i];
-                newer = buffer[i + 1] ?? buffer[i]; // clamp to latest if past end
-                break;
-            }
-        }
-
-        // renderTime is before all stored snapshots – extrapolate from oldest
-        if (!older) {
-            return buffer[0];
-        }
-
-        // renderTime is at or after the latest snapshot – return latest
-        if (older === newer || !newer) {
-            return older;
-        }
-
-        // Linear interpolation between the two bracketing snapshots
-        const span     = newer.timestamp - older.timestamp;
-        const raw_t    = span > 0 ? (renderTime - older.timestamp) / span : 0;
-        const t        = Math.max(0, Math.min(1, raw_t));
-
+    calculateSnapshot(){
+        const bots = this.SI.calcInterpolation("x y z yaw(rad) pitch(rad)","bots")
+        const players = this.SI.calcInterpolation("x y z yaw(rad) pitch(rad)","players")
+        const bullets = this.SI.calcInterpolation("x y z","bullets")
+        const pickups = this.SI.calcInterpolation("x y z","pickups")
         return {
-            x:     MathUtils.lerp(older.x,     newer.x,     t),
-            y:     MathUtils.lerp(older.y,     newer.y,     t),
-            z:     MathUtils.lerp(older.z,     newer.z,     t),
-            yaw:   MathUtils.lerpAngle(older.yaw,   newer.yaw,   t),
-            pitch: MathUtils.lerp(older.pitch, newer.pitch, t),
-        };
-    }
-
-    // -------------------------------------------------------------------------
-    // Lifecycle helpers
-    // -------------------------------------------------------------------------
-
-    /** Remove all buffered snapshots for a disconnected entity. */
-    removeEntity(id) {
-        this.snapshots.delete(id);
+            players : players,
+            bots : bots,
+            bullets : bullets,
+            pickups : pickups
+        }
     }
 
     /** Wipe all state (call on `backToMenu`). */
     clearAll() {
-        this.snapshots.clear();
+        this.SI = new SnapshotInterpolation(TICK_RATE);
     }
 }
 

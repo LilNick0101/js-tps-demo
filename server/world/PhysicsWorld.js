@@ -4,7 +4,7 @@ const {
     GROUND_FRICTION,
     GROUND_RESTITUTION,
     PLAYER_RADIUS,
-} = require('../../shared/constants');;
+} = require('../../shared/constants');
 const {
     Position,
     Velocity,
@@ -550,11 +550,15 @@ class PhysicsWorld {
         }
     }
 
-    raytrace(origin, direction, maxDistance) {
+    raytrace(origin, direction, maxDistance, ignorePlayers = false, ignoreBody = null) {
         if (!this.world) return null;
         
         const ray = new RAPIER.Ray(origin, direction);
-        const hit = this.world.castRay(ray, maxDistance, true);
+        let collisionGroups = ignorePlayers ? LOS_MEMBERSHIP : null;
+        if (collisionGroups === undefined || collisionGroups === null) {
+            collisionGroups = 0xffffffff; // Default to all groups
+        }
+        const hit = this.world.castRay(ray, maxDistance, true, 0xffffffff, collisionGroups, ignoreBody);
         
         if (hit != null) {
         // 3. Calculate the exact x, y, z position
@@ -566,7 +570,14 @@ class PhysicsWorld {
 
             console.log("Hit at:", hitPosition.x, hitPosition.y, hitPosition.z);
         
-            return hitPosition;
+            return {
+                position: {
+                    x: ray.origin.x + ray.dir.x * hit.timeOfImpact,
+                    y: ray.origin.y + ray.dir.y * hit.timeOfImpact,
+                    z: ray.origin.z + ray.dir.z * hit.timeOfImpact
+                },
+                distance: hit.timeOfImpact // Because direction is normalized, this is in units
+            };
         }
         return null
     }

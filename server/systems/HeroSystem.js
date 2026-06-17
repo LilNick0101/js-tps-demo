@@ -20,6 +20,7 @@ const {
     PICKUP_TYPES,
     DAMAGE_TYPES,
     GROUND_RESTITUTION,
+    PLAYER_RADIUS,
 } = require('../../shared/constants');
 const heroConfigs = require('../../shared/config/heroes.json');
 
@@ -447,24 +448,63 @@ class HeroSystem {
         AbilityCooldowns.ability2[eid] = CD.SHADOW_TELEPORT_CD;
 
         const yaw = Rotation.yaw[eid];
+        const pitch = Rotation.pitch[eid];
         const dx  = -Math.sin(yaw) * CD.SHADOW_TELEPORT_DIST;
+        const dy  = Math.sin(pitch) * CD.SHADOW_TELEPORT_DIST;
         const dz  = -Math.cos(yaw) * CD.SHADOW_TELEPORT_DIST;
 
         const newX = Position.x[eid] + dx;
-        const newY = Position.y[eid];
+        const newY = Position.y[eid] + dy;
         const newZ = Position.z[eid] + dz;
 
         // Teleport physics body
         const bodyId = this.ecsWorld.getEntityId(eid);
-        const body   = this.physicsWorld.getBody(bodyId);
-        if (body) {
-            body.setTranslation({ x: newX, y: newY, z: newZ }, true);
-            body.setLinvel({ x: 0, y: 0, z: 0 }, true);
+        const start = { x: Position.x[eid], y: Position.y[eid], z: Position.z[eid] };
+        let end = { x: newX, y: newY, z: newZ };
+        const direction = { x: end.x - start.x, y: end.y - start.y, z: end.z - start.z };
+        const maxToi = CD.SHADOW_TELEPORT_DIST;
+                // 1. Calculate the current length (magnitude) of your direction vector
+        const length = Math.sqrt(direction.x ** 2 + direction.y ** 2 + direction.z ** 2);
+
+        // 2. Divide each component by the length to normalize it (shield against divide-by-zero)
+        const normalizedDir = length > 0 ? {
+            x: direction.x / length,
+            y: direction.y / length,
+            z: direction.z / length
+        } : { x: 0, y: 0, z: 0 };
+
+        let rayHit = this.physicsWorld.raytrace(
+            start,
+            normalizedDir,
+            maxToi,
+            true // ignore players
+        );
+
+        if (rayHit) {
+            const wallBuffer = PLAYER_RADIUS + 0.2; 
+            
+            const safeDistance = Math.max(0, rayHit.distance - wallBuffer);
+            
+            const safeDest = {
+                x: start.x + normalizedDir.x * safeDistance,
+                y: start.y + normalizedDir.y * safeDistance,
+                z: start.z + normalizedDir.z * safeDistance
+            };
+
+            this.physicsWorld.setTranslation(bodyId, safeDest);
+            end = safeDest; // Update end position to the actual teleport location for consistency
+        }else {
+            this.physicsWorld.setTranslation(bodyId, end);
+            
         }
 
-        Position.x[eid] = newX;
-        Position.y[eid] = newY;
-        Position.z[eid] = newZ;
+        Position.x[eid] = end.x;
+        Position.y[eid] = end.y;
+        Position.z[eid] = end.z;
+
+        this.physicsWorld.setLinearVelocity(bodyId, 0, 0, 0, true);
+
+
 
         const id = this.ecsWorld.getEntityId(eid);
         this.io.emit('shadowTeleport', { id, x: newX, y: newY, z: newZ });
@@ -696,16 +736,24 @@ class HeroSystem {
         const rdy =  Math.sin(pitch);
         const rdz = -Math.cos(yaw) * Math.cos(pitch);
 
+        const direction = { x: rdx, y: rdy, z: rdz };
+        const length = Math.sqrt(direction.x ** 2 + direction.y ** 2 + direction.z ** 2);
+        const normalizedDir = length > 0 ? {
+            x: direction.x / length,
+            y: direction.y / length,
+            z: direction.z / length
+        } : { x: 0, y: 0, z: 0 };
+
         let cx, cz, cy;
         let raycastHit = this.physicsWorld.raytrace(
             { x: px, y: py + 1.5, z: pz }, // ray origin (eye level)
-            { x: rdx, y: rdy, z: rdz },    // ray direction
+            normalizedDir,    // ray direction
             MAX_RANGE
         );
         if (raycastHit) {
-            cx = raycastHit["x"];
-            cy = raycastHit["y"];
-            cz = raycastHit["z"];
+            cx = raycastHit.position.x;
+            cy = raycastHit.position.y;
+            cz = raycastHit.position.z;
         } else if (rdy < -0.05) {
             // Ray intersects y=0 plane: py + t*rdy = 0 → t = -py/rdy
             const t = Math.min(-py / rdy, MAX_RANGE);

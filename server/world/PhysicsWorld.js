@@ -4,8 +4,7 @@ const {
     GROUND_FRICTION,
     GROUND_RESTITUTION,
     PLAYER_RADIUS,
-} = require('../../shared/constants');
-const { Vector3 } = require('../../shared/utils/Vector3.js');
+} = require('../../shared/constants');;
 const {
     Position,
     Velocity,
@@ -33,6 +32,7 @@ class PhysicsWorld {
     constructor() {
         this.world = null;
         this.bodies = new Map();
+        /** @type {Map<number, RAPIER.RigidBody>} */
         this.rigidBodies = new Map();
         /** @type {Map<number, RAPIER.CharacterController>} */
         this.characterControllers = new Map();
@@ -175,20 +175,19 @@ class PhysicsWorld {
         return hit !== null && vel.y <= 0.5;
     }
 
-    checkGroundDetectionAt(x,y,z) {
+    checkGroundDetectionAt(x,y,z, maxToi=0.13,ignoreBody=null) {
         const rayOrigin = {
             x: x,
             y: y,
             z: z,
         };
         const rayDir = { x: 0, y: -1, z: 0 };
-        const maxToi = 0.13;
         const solid = true;
         
         const ray = new RAPIER.Ray(rayOrigin, rayDir);
-        const rayFilter = PLAYER_MEMBERSHIP;
-        const hit = this.world.castRay(ray, maxToi, solid, 0xffffffff, rayFilter, null, null);
-
+        const rayFilter = LOS_MEMBERSHIP;
+        const hit = this.world.castRay(ray, maxToi, solid, 0xffffffff, rayFilter, null, ignoreBody);
+        
         return hit !== null;
     }
     

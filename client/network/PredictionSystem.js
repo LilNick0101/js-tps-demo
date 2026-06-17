@@ -1,20 +1,3 @@
-/**
- * client/network/PredictionSystem.js
- *
- * Client-Side Prediction + Reconciliation
- * ----------------------------------------
- * Instead of waiting for the server round-trip (≈ one RTT of latency) before
- * moving, the client immediately applies every input locally and renders the
- * predicted position.  When the server's acknowledgement arrives we compare
- * the two positions and, if they differ by more than RECONCILE_THRESHOLD,
- * we snap back to the server position and replay all still-unacknowledged
- * inputs on top of it.
- *
- * Movement mathematics mirror server/systems/MovementSystem.js so the
- * predicted result stays as close to authoritative as possible.  Full Rapier
- * physics is not available on the client, so vertical movement (gravity /
- * jump) uses a simplified Euler integration.
- */
 
 // Match server constants (keep in sync with shared/constants.js)
 const PLAYER_MOVE_SPEED   = 12.0;

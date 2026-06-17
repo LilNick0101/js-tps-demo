@@ -8,6 +8,13 @@ const CAMERA_SHOULDER_OFFSET = new THREE.Vector3(1.2, 2.3, 4.5);
 const CAMERA_AIM_DISTANCE = 200;
 const CAMERA_COLLISION_PUSH = 0.15;
 
+/**
+ * CameraSystem - Camera control, third-person positioning, and aim target calculation
+ * - Manages the camera's position and orientation based on the player's position and aim direction.
+ * - Implements a right-shoulder third-person view with collision avoidance to prevent clipping through walls.
+ * - Calculates the aim target in the world based on the camera's forward direction and performs raycasting to adjust for obstacles.
+ * - Provides methods to toggle scoped view (FOV change) and to attach the camera to a player mesh for visibility management.
+ */
 class CameraSystem {
     constructor(renderSystem) {
         this.renderSystem = renderSystem;

@@ -1875,20 +1875,34 @@ class HeroSystem {
         const yaw = Rotation.yaw[eid];
         const pitch = Rotation.pitch[eid];
         for (let i = 0; i < 4; i++) {
+            const spawnOffset = 2.2; // Distance in meters to spawn in front of the player
             let randomYaw = yaw + (Math.random() - 0.5) * 0.4; // Slight random spread
             let randomPitch = pitch + (Math.random() - 0.5) * 0.1;
             const vx = -Math.sin(randomYaw) * Math.cos(randomPitch) * CD.HOLY_WATER_THROW_SPEED;
             const vz = -Math.cos(randomYaw) * Math.cos(randomPitch) * CD.HOLY_WATER_THROW_SPEED;
-            const vy = Math.sin(randomPitch) * CD.HOLY_WATER_THROW_SPEED + 2.0; // Add slight upward arc
+            const vy = Math.sin(randomPitch) * CD.HOLY_WATER_THROW_SPEED + 10.0; // Add slight upward arc
 
+            const dirX = -Math.sin(randomYaw) * Math.cos(randomPitch);
+            const dirY =  Math.sin(randomPitch);
+            const dirZ = -Math.cos(randomYaw) * Math.cos(randomPitch);
+
+            const spawnX = Position.x[eid] + (dirX * spawnOffset);
+            const spawnY = Position.y[eid] + 1 + (dirY * spawnOffset); 
+            const spawnZ = Position.z[eid] + (dirZ * spawnOffset);
+
+            const projId = `proj_${this._projCounter++}`;
+
+            const body = this.physicsWorld.createProjectileBody(spawnX, spawnY, spawnZ, 1.2, vx, vy, vz,
+                {
+                    gravityScale : 2.2
+                }
+            );
+            this.physicsWorld.addBody(projId,body);
+            const bottle = this.ecsWorld.createPhysicsProjectileEntity(projId, eid, Position.x[eid], Position.y[eid] + 1, Position.z[eid], vx, vy, vz, 1000, 2); // Add 10 ticks just to be sure
+            
             this._holyWaters.push({
                 ownerEid: eid,
-                x: Position.x[eid],
-                y: Position.y[eid] + 1.5, // Start slightly above caster's position
-                z: Position.z[eid],
-                vx,
-                vy,
-                vz,
+                bottleEid: bottle,
                 state: 'airborne',
                 remaining: 0,
             });
@@ -1903,38 +1917,35 @@ class HeroSystem {
     }
 
     _tickHolyWaters() {
-        const dt      = 1 / TICK_RATE;
-        const gravity = -9.81;
         let alreadyHealedThisTick = new Set();
         for (let i = 0; i < this._holyWaters.length; i++) {
             const g = this._holyWaters[i];
             if (g.state === "airborne") {
                  // Simple projectile motion with gravity
-                g.vy += gravity * dt;
-                g.x  += g.vx * dt;
-                g.y  += g.vy * dt;
-                g.z  += g.vz * dt;
-                if (this.physicsWorld.checkGroundDetectionAt(g.x, g.y, g.z) || g.y <= -100) {
+                const bodyId = this.ecsWorld.getPhysicsIdFromEntity(g.bottleEid);
+                const isGrounded = this.physicsWorld.checkGroundDetectionAt(Position.x[g.bottleEid], Position.y[g.bottleEid], Position.z[g.bottleEid], 1.25, this.physicsWorld.getBody(bodyId));
+
+                if (isGrounded || g.y <= -100) {
+                    this.physicsWorld.removeBody(bodyId);
                     g.state = "grounded";
                     g.remaining = CD.HOLY_WATER_DURATION;
                     let casterTeam = Number(Team.id[g.ownerEid] ?? 0);
 
-                    //{ ownerEid, x, y, z, vx, vy, vz, state (On Air or Lingering), ticksLeft (When On Ground) }
-    
                     let healedTargets = this._applyHolyWaterHeal(casterTeam, g, alreadyHealedThisTick);
                     alreadyHealedThisTick = healedTargets;
 
                     this.io.emit('holyWaterImpact', {
                         id: this.ecsWorld.getEntityId(g.ownerEid),
-                        x: g.x,
-                        y: g.y,
-                        z: g.z,
+                        x: Position.x[g.bottleEid],
+                        y: Position.y[g.bottleEid],
+                        z: Position.z[g.bottleEid],
                     });
                 }
             }else if (g.state === "grounded") {
                 g.remaining--;
                 if (g.remaining <= 0) {
                     this._holyWaters.splice(i, 1);
+                    this.ecsWorld.removeBulletEntity(g.bottleEid);
                     i--;
                     continue;
                 }
@@ -1949,14 +1960,12 @@ class HeroSystem {
 
                 this.io.emit('holyWaterTick', {
                     id: this.ecsWorld.getEntityId(g.ownerEid),
-                    x: g.x,
-                    y: g.y,
-                    z: g.z,
+                    x: Position.x[g.bottleEid],
+                    y: Position.y[g.bottleEid],
+                    z: Position.z[g.bottleEid],
                 });
             }
         }
-
-        
     }
 
     _applyHolyWaterHeal(casterTeam, g,alreadyHealedTargets = new Set()) {
@@ -1967,9 +1976,9 @@ class HeroSystem {
             const targetTeam = Number(Team.id[targetEid] ?? 0);
             if (casterTeam > 0 && targetTeam > 0 && casterTeam !== targetTeam) continue;
 
-            const dx = g.x - Position.x[targetEid];
-            const dy = g.y - Position.y[targetEid];
-            const dz = g.z - Position.z[targetEid];
+            const dx = Position.x[g.bottleEid] - Position.x[targetEid];
+            const dy = Position.y[g.bottleEid] - Position.y[targetEid];
+            const dz = Position.z[g.bottleEid] - Position.z[targetEid];
 
             let r2 = CD.HOLY_WATER_RADIUS * CD.HOLY_WATER_RADIUS;
             const horizDist2 = dx * dx + dz * dz + dy * dy;

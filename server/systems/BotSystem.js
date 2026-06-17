@@ -216,15 +216,22 @@ class BotSystem {
      */
     chaseBehavior(botEid, target, rush = false) {
         const bx = Position.x[botEid];
+        const by = Position.y[botEid];
         const bz = Position.z[botEid];
 
         // Calculate direction to target
         const dx = target.x - bx;
+        const dy = target.y - by;
         const dz = target.z - bz;
-        const targetYaw = Math.atan2(-dx, -dz);
 
-        // Smoothly rotate towards target with configurable accuracy
-        Rotation.yaw[botEid] = this.lerpAngle(Rotation.yaw[botEid], targetYaw, BOT_AIM_ACCURACY * (rush ? 1.2 : 1.0));
+        const aimJitterYaw = (Math.random() - 0.5) * 0.045;
+        const aimJitterPitch = (Math.random() - 0.5) * 0.02;
+        const targetYaw = Math.atan2(-dx, -dz) + aimJitterYaw;
+        const targetPitch = Math.atan2(dy, Math.sqrt(dx * dx + dz * dz)) + aimJitterPitch;
+
+        // Aim at target with configurable accuracy
+        Rotation.yaw[botEid] = this.lerpAngle(Rotation.yaw[botEid], targetYaw, BOT_AIM_ACCURACY * 0.9);
+        Rotation.pitch[botEid] = this.lerpAngle(Rotation.pitch[botEid], targetPitch, BOT_AIM_ACCURACY * 0.8);
 
         // Move forward
         Controller.forward[botEid] = 1;

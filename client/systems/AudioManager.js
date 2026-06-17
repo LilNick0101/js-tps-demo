@@ -17,7 +17,7 @@ class AudioManager {
 
         // Sound Capping
         this.playHistory = new Map(); 
-        this.MAX_CONCURRENT_SOUNDS = 3; 
+        this.MAX_CONCURRENT_SOUNDS = 4; 
         this.THROTTLE_WINDOW_MS = 100;
 
         // Three.js Core Audio Objects

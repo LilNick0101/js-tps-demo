@@ -7,11 +7,8 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
  * Populates a THREE.Scene with the visual geometry for a given map config.
  *
  * Two rendering strategies:
- *   - gltfPath set  → load the GLTF/GLB model; meshes inside a group named
- *                     mapConfig.collisionLayer are made invisible (they exist
- *                     only for the server-side physics collision file).
- *   - gltfPath null → procedurally build a flat PlaneGeometry floor and a
- *                     GridHelper using mapConfig.floor and mapConfig.size.
+ *   - gltfPath set  → load the GLTF/GLB model;
+ *   - gltfPath null → procedurally build a flat PlaneGeometry floor + GridHelper based on mapConfig.size (and mapConfig.floor if provided).
  *
  * In both cases the scene.fog is set from mapConfig.fog.
  *

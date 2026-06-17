@@ -16,7 +16,7 @@
     "arena": {
         "id": "arena",
         "name": "Arena",
-        "description": "A compact indoor arena with raised platforms and cover.",
+        "description": "A compact outdoors arena with raised platforms and cover.",
         "size": 120,
         "spawnConfig": "arena",
         "gltfPath": "/assets/world/maps/arena/arena.glb",

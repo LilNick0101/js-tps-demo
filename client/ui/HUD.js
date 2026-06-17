@@ -1,13 +1,5 @@
 /**
  * HUD – manages all in-game UI overlay elements.
- *
- * Lifecycle:
- *   const hud = new HUD();
- *   hud.init();                                  // call once when game starts
- *   hud.updateHealth(75);
- *   hud.showRespawnCountdown(3000);              // ms until respawn
- *   hud.updateScoreboard(playerScores, myId);
- *   hud.destroy();                               // call when returning to menu
  */
 export default class HUD {
     constructor() {
@@ -59,10 +51,6 @@ export default class HUD {
         }
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Shield
-    // ─────────────────────────────────────────────────────────────────────────
-
     /**
      * @param {number} shield   – current shield value
      * @param {number} shieldMax – maximum (defaults to 80)
@@ -75,10 +63,6 @@ export default class HUD {
         fill.style.width = `${pct}%`;
         text.textContent = `${Math.round(shield)} SH`;
     }
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // Armor
-    // ─────────────────────────────────────────────────────────────────────────
 
     /**
      * @param {number} armor   – current armor value
@@ -93,10 +77,6 @@ export default class HUD {
         text.textContent = `${Math.round(armor)} AR`;
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Ammo
-    // ─────────────────────────────────────────────────────────────────────────
-
     /**
      * @param {number} ammo        – current clip rounds
      * @param {number} reserveAmmo – total reserve ammo
@@ -108,10 +88,6 @@ export default class HUD {
         // Flash red when clip is almost empty
         el.style.color = ammo <= 5 ? '#ff4444' : '#fff';
     }
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // Ability cooldowns
-    // ─────────────────────────────────────────────────────────────────────────
 
     /**
      * @param {{ ability1Cooldown, ability2Cooldown, ultimateCooldown, ultimateActive }} data
@@ -141,10 +117,6 @@ export default class HUD {
         updateSlot('ability-slot-3', ultimateCooldown,  maxCds.ult, ultimateActive === 1);
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Health
-    // ─────────────────────────────────────────────────────────────────────────
-
     /**
      * @param {number} health    – current HP
      * @param {number} maxHealth – hero's maximum HP (default 100)
@@ -164,10 +136,6 @@ export default class HUD {
 
         text.textContent = `${Math.round(health)} / ${Math.round(maxHealth)} HP`;
     }
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // Respawn overlay
-    // ─────────────────────────────────────────────────────────────────────────
 
     /**
      * Show the respawn overlay and count down from the given delay.
@@ -204,9 +172,6 @@ export default class HUD {
         const overlay = this._els.get('respawn-overlay');
         if (overlay) overlay.style.display = 'none';
     }
-
-    // ─────────────────────────────────────────────────────────────────────────    // Self-effect status chips
-    // ───────────────────────────────────────────────────────────────────────────
 
     /**
      * Show a persistent status chip (e.g. "IRON STAND ACTIVE").
@@ -253,10 +218,6 @@ export default class HUD {
         this._selfEffectKeys.clear();
     }
 
-    // ───────────────────────────────────────────────────────────────────────────
-    // Screen-tint overlay (Iron Stand golden border, Shadow Realm dark veil)
-    // ───────────────────────────────────────────────────────────────────────────
-
     /**
      * Show a full-screen tint overlay with an optional message.
      * @param {string} key     – used to match showScreenTint/hideScreenTint calls
@@ -287,9 +248,6 @@ export default class HUD {
         const overlay = this._els.get('screen-tint');
         if (overlay) overlay.style.display = 'none';
     }
-
-    // ───────────────────────────────────────────────────────────────────────────    // Kill notifications
-    // ─────────────────────────────────────────────────────────────────────────
 
     /**
      * Add a line to the kill feed (top-right).
@@ -375,10 +333,6 @@ export default class HUD {
         }, 2000);
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Hitmarker
-    // ─────────────────────────────────────────────────────────────────────────
-
     /** Flash the hitmarker for 150 ms. */
     showHitmarker() {
         const el = this._els.get('hitmarker');
@@ -395,10 +349,6 @@ export default class HUD {
             `Position: (${info.x}, ${info.y}, ${info.z})\n` +
             `Ping: ${ping} ms\n`;
     }
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // Scoreboards
-    // ─────────────────────────────────────────────────────────────────────────
 
     /**
      * Refresh both the full scoreboard and the mini scoreboard.

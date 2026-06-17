@@ -2,10 +2,11 @@ import * as THREE from 'three';
 
 const BULLET_TYPES = {
     STANDARD : 0,
-    SHOCK_GRENADE : 1
+    SHOCK_GRENADE : 1,
+    HOLY_WATER : 2,
 }
 /**
- * RenderSystem - Syncs ECS entity positions to Three.js meshes
+ * RenderSystem - Visual Effects and Mesh Management
  */
 class RenderSystem {
     constructor(scene) {
@@ -42,7 +43,7 @@ class RenderSystem {
         this._siphonLifeCones = new Map(); // Siphon Life cone meshes keyed by entity ID
         // Kyoukan – Heroic Aura active tint state
         this._heroicAuraActive = new Map();
-        // Healing Rite glint meshes keyed by entity ID
+        
         this._attachedMeshes = new Map(); // For meshes attached to entities (e.g. Siphon Life cones), keyed by entity ID
 
         this._animators = new Map(); // TextureAnimators for healing glints keyed by entity ID
@@ -135,6 +136,13 @@ class RenderSystem {
                 geom = new THREE.SphereGeometry(0.5, 8, 8);
                 mat = new THREE.MeshBasicMaterial({ 
                     color: 0xff0000,
+                });
+                mesh =  new THREE.Mesh(geom, mat);
+                break;
+            case BULLET_TYPES.HOLY_WATER:
+                geom = new THREE.SphereGeometry(0.3, 8, 8);
+                mat = new THREE.MeshBasicMaterial({ 
+                    color: 0x18d049,
                 });
                 mesh =  new THREE.Mesh(geom, mat);
                 break;

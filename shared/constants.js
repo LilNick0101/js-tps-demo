@@ -349,7 +349,7 @@ module.exports = {
         HOLY_WATER_HEAL_PER_INTERVAL: 7, // hp healed per tick
         HOLY_WATER_TICK_INTERVAL: 15, // 0.25 s per heal tick
         HOLY_WATER_RADIUS: 12.0,
-        HOLY_WATER_THROW_SPEED: 36,
+        HOLY_WATER_THROW_SPEED: 40,
 
         HAMMER_OF_JUSTICE_CD: 3600, // 60 s 3600
         HAMMER_OF_JUSTICE_DAMAGE: 50,

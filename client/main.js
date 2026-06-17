@@ -796,6 +796,7 @@ function setupNetworkHandlers() {
 
     registerEventListener('crystalShardExpired', (data) => {
         renderSystem.vfxCrystalShardExpired(data);
+        renderSystem.hidePickupMesh(data.pickupId);
     });
 
     registerEventListener('astralElevationStart', (data) => {

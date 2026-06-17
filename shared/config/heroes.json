@@ -176,12 +176,12 @@
         "description": "Heal an ally for 20% of their max health. Hold middle mouse to self-cast."
       },
       "ability2": {
-        "name": "Majestic Leap",
+        "name": "Engaging Leap",
         "key": "2",
         "description": "Leap powerfully upward and forward toward your aim direction."
       },
       "ultimate": {
-        "name": "Heroic Aura",
+        "name": "Inspiring Aura",
         "key": "3",
         "description": "For 10 seconds, pulse armor and ultimate cooldown reduction to yourself and nearby allies every second."
       }
@@ -199,7 +199,7 @@
     "weaponId": 0,
     "abilities": {
       "ability1": {
-        "name": "Healing Rite",
+        "name": "Healing Boon",
         "key": "1",
         "description": "Heal an ally for 10 HP every second for 10 seconds. Can self-cast but not cast on others while self-casting."
       },

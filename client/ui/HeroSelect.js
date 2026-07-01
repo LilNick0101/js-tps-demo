@@ -41,7 +41,7 @@ const HERO_DATA = [
         color: '#f5c542',
         desc: 'Vigilante bruiser who uses high-impact gadgets to control the battlefield.',
         abilities: [
-            { key: '1', name: 'Shock Grenade', desc: 'Throw a grenade that explodes and slows all caught in the blast.' },
+            { key: '1', name: 'Shock Grenade', desc: 'Throw a grenade that explodes on impact and slows all caught in the blast.' },
             { key: '2', name: 'Willpower', desc: 'Activate a personal energy shield that absorbs incoming damage.' },
             { key: '3', name: 'Cluster Strike', desc: 'Call in a cluster-bomb barrage that blankets a wide area.' },
         ],

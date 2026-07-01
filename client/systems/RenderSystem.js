@@ -133,7 +133,7 @@ class RenderSystem {
                 mesh =  new THREE.Mesh(geom, mat);
                 break;
             case BULLET_TYPES.SHOCK_GRENADE:
-                geom = new THREE.SphereGeometry(0.5, 8, 8);
+                geom = new THREE.SphereGeometry(0.35, 8, 8);
                 mat = new THREE.MeshBasicMaterial({ 
                     color: 0xff0000,
                 });
@@ -592,6 +592,19 @@ class RenderSystem {
         if (mesh) mesh.visible = false;
     }
 
+    removePickupMesh(id) {
+        const mesh = this.pickupMeshes.get(id);
+        if (mesh) {
+            this.scene.remove(mesh);
+            if (mesh.geometry) mesh.geometry.dispose();
+            if (mesh.material) {
+                if (mesh.material.map) mesh.material.map.dispose();
+                mesh.material.dispose();
+            }
+            this.pickupMeshes.delete(id);
+        }
+    }
+
     showPickupMesh(id) {
         const mesh = this.pickupMeshes.get(id);
         if (mesh) mesh.visible = true;
@@ -599,6 +612,15 @@ class RenderSystem {
 
     hasPickupMesh(id) {
         return this.pickupMeshes.has(id);
+    }
+
+    prunePickupMeshes(activePickupIds) {
+        // Remove any pickup meshes that are not in the activePickupIds set
+        for (const id of this.pickupMeshes.keys()) {
+            if (!activePickupIds.has(id)) {
+                this.removePickupMesh(id);
+            }
+        }
     }
 
     // -------------------------------------------------------

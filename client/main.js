@@ -80,7 +80,7 @@ const HERO_CD_MAXES = {
     0: { a1:   1, a2:   1, ult:    1 }, // Dummy – no abilities
     1: { a1: 480, a2: 360, ult: 2700 }, // Sven
     2: { a1: 600, a2: 720, ult: 3600 }, // Tamerlane
-    3: { a1: 720, a2: 800, ult: 3600 }, // Father Callas
+    3: { a1: 900, a2: 840, ult: 3600 }, // Father Callas
     4: { a1: 600, a2: 900, ult: 3600 }, // Selene
     5: { a1: 720, a2: 900, ult: 3600 }, // Fat Jerome
     6: { a1: 540, a2: 840, ult: 3600 }, // Kyoukan
@@ -670,8 +670,11 @@ function setupNetworkHandlers() {
         renderSystem.vfxGrenadeThrown(data);
         const mesh = renderSystem.getMesh(data.throwerId);
         audioManager.playHeroAbilityLine(2, 'ability1', mesh);
+        audioManager.playSoundAt('shockGrenadeLaunch', mesh);
     });
-    registerEventListener('grenadeExploded',  (data) => { renderSystem.vfxGrenadeExploded(data);  });
+    registerEventListener('grenadeExploded',  (data) => { 
+       specialEffects.spawnExplosion(data);
+    });
     registerEventListener('willpowerActivated', (data) => {
         if (isLocalPlayer(data.id)) hud.showSelfEffect('willpower', 'Willpower - Empowered', '#1378d1');
         renderSystem.vfxWillpower(data);
@@ -786,7 +789,11 @@ function setupNetworkHandlers() {
         renderSystem.vfxCrystalSmashHit(data);
         if (isLocalPlayer(data.id)) {
             hud.hideSelfEffect('crystalSmash');
-            predictionSystem.stopCrystalSmash();
+        }
+    });
+    registerEventListener('crystalSmashEnd', (data) => {
+        if (isLocalPlayer(data.id)) {
+            hud.hideSelfEffect('crystalSmash');
         }
     });
 
@@ -796,7 +803,7 @@ function setupNetworkHandlers() {
 
     registerEventListener('crystalShardExpired', (data) => {
         renderSystem.vfxCrystalShardExpired(data);
-        renderSystem.hidePickupMesh(data.pickupId);
+        renderSystem.removePickupMesh(data.pickupId);
     });
 
     registerEventListener('astralElevationStart', (data) => {
@@ -843,6 +850,7 @@ function setupNetworkHandlers() {
             hud.hideSelfEffect('lunarEclipse');
             hud.hideScreenTint('lunarEclipse');
         }
+        audioManager.playSoundAt('lunarEclipseBlast', { x: data.x, y: data.y, z: data.z });
         // If local player was caught in the blast, show a silence HUD indicator
         if (data.hitTargetIds && data.hitTargetIds.includes(myId)) {
             hud.showSelfEffect('silenced', '🔇 Silenced - Cannot Use Abilities', '#4466ff');
@@ -1071,16 +1079,12 @@ function setupNetworkHandlers() {
         if (!state || !match) {
             return;
         }
-        //console.log(state)
         interpolationSystem.addSnapshot(state)
-
-        // console.log(bullets)
 
         if (match) {
             currentMatchState = { ...currentMatchState, ...match };
             hud.updateMatchState(currentMatchState);
         }
-        // 1. Update Players
     });
 }
 
@@ -1213,6 +1217,7 @@ function update(){
             }
             renderSystem.updatePickupMesh(pu.id, pu);
         }
+        renderSystem.prunePickupMeshes(new Set(pickups.map(p => p.id)));
     }
 
     // 3. Update Camera (Over-the-Shoulder)

@@ -49,7 +49,7 @@ module.exports = {
     MODES_CONFIG,
     ACTIVE_GAME_MODE,
     POST_MATCH_RESTART_MS,
-    NUM_BOTS: 9, // default number of bots
+    NUM_BOTS: 0, // default number of bots
 
     // Respawn
     RESPAWN_DELAY: 4000,   // ms before a dead entity respawns
@@ -209,11 +209,10 @@ module.exports = {
 
         // Tamerlane
         SHOCK_GRENADE_CD:     600,  // 10 s
-        SHOCK_GRENADE_FUSE:   80,  // 1.67 s
         SHOCK_GRENADE_THROW_SPEED : 50,
         SHOCK_GRENADE_DAMAGE: 45,
         SHOCK_GRENADE_RADIUS: 7.0,
-        SHOCK_GRENADE_SLOW:   180,  // ticks of slow effect
+        SHOCK_GRENADE_SLOW:   160,  // ticks of slow effect
         SHOCK_GRENADE_SLOW_FACTOR: 0.45, // fraction of normal speed while slowed
         WILLPOWER_CD:         720,  // 12 s
         WILLPOWER_SHIELD:     80,   // temporary shield amount
@@ -225,7 +224,7 @@ module.exports = {
         CLUSTER_STRIKE_INTERVAL: 20, // ticks between bombs
 
         // Shadow Lightning
-        SHADOW_LIGHTNING_DAMAGE: 75,
+        SHADOW_LIGHTNING_DAMAGE: 64,
         SHADOW_LIGHTNING_RADIUS: 7,
         SHADOW_LIGHTNING_INTERVAL: 35, // ticks between bolts during channel
         SHADOW_LIGHTNING_DIST: [6, 13, 20], // distances of the 3 bolts
@@ -237,7 +236,7 @@ module.exports = {
         SHADOW_STORM_RADIUS: 14.0,
 
         // Father Callas – Siphon Life
-        SIPHON_LIFE_CD:        720,   // 12 s
+        SIPHON_LIFE_CD:        900,   // 15 s
         SIPHON_LIFE_RANGE:     14.0,   // cone length (units)
         SIPHON_LIFE_HALF_ANGLE: 0.698, // ~40° half-angle (full cone = 80°)
         SIPHON_LIFE_DURATION:  360,   // 6 s channel duration
@@ -246,9 +245,9 @@ module.exports = {
         SIPHON_LIFE_HEAL_RATIO: 0.30, // 30 % of total damage dealt heals caster
 
         // Father Callas – Iron Stand
-        IRON_STAND_CD:             800,  // 13 s
-        IRON_STAND_DURATION:       270,  // 4.5 s invulnerable + frozen
-        IRON_STAND_SHIELD_DURATION: 600, // 10 s damage-to-shield phase
+        IRON_STAND_CD:             840,  // 14 s
+        IRON_STAND_DURATION:       260,  // 4.5 s invulnerable + frozen
+        IRON_STAND_SHIELD_DURATION: 480, // 8 s damage-to-shield phase
         IRON_STAND_SHIELD_RATIO:   0.20, // 20 % of damage received → shield
         IRON_STAND_SHIELD_MAX:     120,  // cap on gained shield
 
@@ -263,9 +262,9 @@ module.exports = {
         CRYSTAL_SMASH_DAMAGE:          55,  // damage on impact
         CRYSTAL_SMASH_STUN_DURATION:   60,  // 1 s stun
         CRYSTAL_SMASH_HIT_RADIUS:       5.0, // collision sphere during dash
-        CRYSTAL_SMASH_DASH_DURATION:   40,  // ticks the dash travels (~0.23 s)
-        CRYSTAL_SMASH_DASH_SPEED:      32,  // m/s during dash
-        CRYSTAL_SHARD_DESPAWN_TICKS:  480,  // 8 s before shard auto-despawns
+        CRYSTAL_SMASH_DASH_DURATION:   36,  // ticks the dash travels (~0.23 s)
+        CRYSTAL_SMASH_DASH_SPEED:      42,  // m/s during dash
+        CRYSTAL_SHARD_DESPAWN_TICKS:  1200,  // 20 s before shard auto-despawns
 
         // Selene – Astral Elevation
         ASTRAL_ELEVATION_CD:              900, // 15 s

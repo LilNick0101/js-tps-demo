@@ -567,8 +567,6 @@ class PhysicsWorld {
                 y: ray.origin.y + ray.dir.y * hit.timeOfImpact,
                 z: ray.origin.z + ray.dir.z * hit.timeOfImpact
             };
-
-            console.log("Hit at:", hitPosition.x, hitPosition.y, hitPosition.z);
         
             return {
                 position: {

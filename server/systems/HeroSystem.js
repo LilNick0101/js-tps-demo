@@ -60,7 +60,6 @@ class HeroSystem {
 
         /**
          * Grenade tracking: array of grenade objects.
-         * { ownerEid, x, y, z, vx, vy, vz, fuse, hasSlow }
          */
         this._grenades = [];
 
@@ -184,7 +183,6 @@ class HeroSystem {
 
        /**
          * Holy Water Bottles tracking: array of  objects.
-         * { ownerEid, x, y, z, vx, vy, vz, state (On Air or Lingering), ticksLeft (When On Ground) }
          */
         this._holyWaters = [];
 
@@ -457,16 +455,14 @@ class HeroSystem {
         const newY = Position.y[eid] + dy;
         const newZ = Position.z[eid] + dz;
 
-        // Teleport physics body
         const bodyId = this.ecsWorld.getEntityId(eid);
         const start = { x: Position.x[eid], y: Position.y[eid], z: Position.z[eid] };
         let end = { x: newX, y: newY, z: newZ };
         const direction = { x: end.x - start.x, y: end.y - start.y, z: end.z - start.z };
         const maxToi = CD.SHADOW_TELEPORT_DIST;
-                // 1. Calculate the current length (magnitude) of your direction vector
+
         const length = Math.sqrt(direction.x ** 2 + direction.y ** 2 + direction.z ** 2);
 
-        // 2. Divide each component by the length to normalize it (shield against divide-by-zero)
         const normalizedDir = length > 0 ? {
             x: direction.x / length,
             y: direction.y / length,
@@ -495,7 +491,6 @@ class HeroSystem {
             end = safeDest; // Update end position to the actual teleport location for consistency
         }else {
             this.physicsWorld.setTranslation(bodyId, end);
-            
         }
 
         Position.x[eid] = end.x;
@@ -580,7 +575,7 @@ class HeroSystem {
         const dirZ = -Math.cos(yaw) * Math.cos(pitch);
 
         const vx = dirX * speed;
-        const vy = dirY * speed + 5; 
+        const vy = dirY * speed + 6; 
         const vz = dirZ * speed;
 
         const spawnX = Position.x[eid] + (dirX * spawnOffset);
@@ -589,9 +584,9 @@ class HeroSystem {
 
         const projId = `proj_${this._projCounter++}`;
 
-        const body = this.physicsWorld.createProjectileBody(spawnX, spawnY, spawnZ, 1.5, vx, vy, vz,
+        const body = this.physicsWorld.createProjectileBody(spawnX, spawnY, spawnZ, 1.15, vx, vy, vz,
             {
-                gravityScale : 2.0,
+                gravityScale : 2.4,
                 friction : 5.6,
                 density : 5.3,
                 angularDamping : 5.0,
@@ -599,21 +594,15 @@ class HeroSystem {
             }
         );
         this.physicsWorld.addBody(projId,body);
-        const grenade = this.ecsWorld.createPhysicsProjectileEntity(projId, eid, Position.x[eid], Position.y[eid] + 1, Position.z[eid], vx, vy, vz, 1000, 1); // Add 10 ticks just to be sure
+        const grenade = this.ecsWorld.createPhysicsProjectileEntity(projId, eid, spawnX, spawnY, spawnZ, vx, vy, vz, 1000, 1); // Add 10 ticks just to be sure
 
-        this._grenades.push(
-            {
-                grenade : grenade,
-                fuse : CD.SHOCK_GRENADE_FUSE
-            }
-        );
+        this._grenades.push(grenade);
 
         const id = this.ecsWorld.getEntityId(eid);
         this.io.emit('grenadeThrown', {
             throwerId: id,
             x: grenade.x, y: grenade.y, z: grenade.z,
-            vx, vy, vz,
-            fuse: CD.SHOCK_GRENADE_FUSE / TICK_RATE,
+            vx, vy, vz
         });
     }
 
@@ -624,24 +613,28 @@ class HeroSystem {
 
         for (let i = 0; i < this._grenades.length; i++) {
             const g = this._grenades[i];
-            g.fuse--;
 
-
-            if (g.fuse <= 0) {
+            //const bodyId = this.ecsWorld.getPhysicsIdFromEntity(g.bottleEid);
+            //const isGrounded = this.physicsWorld.checkGroundDetectionAt(Position.x[g.bottleEid], Position.y[g.bottleEid], Position.z[g.bottleEid], 1.25, this.physicsWorld.getBody(bodyId));
+            
+            const bodyId = this.ecsWorld.getPhysicsIdFromEntity(g)
+            const isGrounded = this.physicsWorld.checkGroundDetectionAt(Position.x[g], Position.y[g], Position.z[g], 1.25, this.physicsWorld.getBody(bodyId));
+            console.log(`Grenade ${g} grounded: ${isGrounded}, y: ${Position.y[g]}`);
+            if (isGrounded || Position.y[g] <= -500) {
                 // Explode
-                const grenadeEid = g.grenade;
-                const ownerEid = Bullet.owner[grenadeEid];
+    
+                const ownerEid = Bullet.owner[g];
 
-                const x = Position.x[grenadeEid];
-                const y = Position.y[grenadeEid];
-                const z = Position.z[grenadeEid];
+                const x = Position.x[g];
+                const y = Position.y[g];
+                const z = Position.z[g];
 
                 this._applyAOE(ownerEid, x, y, z,
                     CD.SHOCK_GRENADE_RADIUS, CD.SHOCK_GRENADE_DAMAGE);
 
-                const bodyId = this.ecsWorld.getPhysicsIdFromEntity(grenadeEid);
+                const bodyId = this.ecsWorld.getPhysicsIdFromEntity(g);
                 this.physicsWorld.removeBody(bodyId);
-                this.ecsWorld.removeBulletEntity(grenadeEid);
+                this.ecsWorld.removeBulletEntity(g);
 
                 // Slow all nearby entities
                 for (const targetEid of this.ecsWorld.getAllPlayerAndBotEntities()) {
@@ -708,6 +701,7 @@ class HeroSystem {
         for (const [eid, remaining] of this._willpowerTimers) {
             if (remaining <= 1) {
                 this._willpowerTimers.delete(eid);
+
                 // Zero out the temporary shield if it hasn't been depleted
                 Shield.current[eid] = Math.max(0, Shield.current[eid] - CD.WILLPOWER_SHIELD);
                 Shield.current[eid] = Math.max(0, Shield.current[eid]);
@@ -913,6 +907,7 @@ class HeroSystem {
     _interruptSiphonLife(eid) {
         if (this._siphonLifeTimers.has(eid)) {
             this._siphonLifeTimers.delete(eid);
+
             const id = this.ecsWorld.getEntityId(eid);
             this.io.emit('siphonLifeEnd', { id });
         }
@@ -965,6 +960,7 @@ class HeroSystem {
             if (remaining <= 1) {
                 this._ironStandShieldPhase.delete(eid);
                 const id = this.ecsWorld.getEntityId(eid);
+                Shield.current[eid] = 0; // Remove any remaining shield
                 this.io.emit('ironStandShieldExpired', { id });
             } else {
                 this._ironStandShieldPhase.set(eid, remaining - 1);
@@ -1094,6 +1090,7 @@ class HeroSystem {
         for (const [eid, state] of this._crystalSmashDashes) {
             if (state.remaining <= 0 || state.hit) {
                 this._crystalSmashDashes.delete(eid);
+                this.io.emit('crystalSmashEnd', { id: this.ecsWorld.getEntityId(eid) });
                 continue;
             }
             state.remaining--;

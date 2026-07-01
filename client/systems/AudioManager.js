@@ -146,13 +146,15 @@ class AudioManager {
         }
 
         // Load Ability SFX (Spatial)
+        this._loadSpatialSFX('shockGrenadeLaunch', '/sounds/abilities/shock_grenade_launch.ogg', 0.7, 10, 30, 'linear');
         this._loadSpatialSFX('buttSmashInit', '/sounds/abilities/butt_smash_init.ogg', 0.8, 10, 30, 'inverse');
         this._loadSpatialSFX('regeneration', '/sounds/misc/regeneration.ogg', 0.8, 10, 30, 'inverse');
         this._loadSpatialSFX('holyWater', '/sounds/abilities/holy_water.ogg', 0.7, 5, 70, 'linear');
         this._loadSpatialSFX('hammerHit', '/sounds/abilities/hammer_hit.ogg', 0.8, 5, 70, 'linear');
-        this._loadSpatialSFX('bulletImpact', '/sounds/abilities/hammer_hit.ogg', 0.7, 6, 60, 'linear');
+        // this._loadSpatialSFX('bulletImpact', '/sounds/abilities/bullet_impact.ogg', 0.7, 6, 60, 'linear');
         this._loadSpatialSFX('thunder', '/sounds/abilities/thunder.ogg', 0.9, 60, 80, 'inverse');
         this._loadSpatialSFX('thunderScream', '/sounds/abilities/scream.ogg', 0.9, 30, 70, 'inverse');
+        this._loadSpatialSFX('lunarEclipseBlast', '/sounds/abilities/lunar_eclipse_blast.ogg', 0.9, 30, 70, 'inverse');
         this._loadSpatialSFX('armor', '/sounds/gameplay/armor.ogg', 0.7, 10, 30, 'linear');
         this._loadSpatialSFX('health', '/sounds/gameplay/health.ogg', 0.7, 10, 30, 'linear');
         this._loadSpatialSFX('jumppad', '/sounds/gameplay/jumppad.ogg', 0.7, 10, 30, 'linear');
